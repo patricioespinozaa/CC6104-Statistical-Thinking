@@ -1,0 +1,791 @@
+---
+title: "Tarea 4"
+output:
+  html_document:
+    df_print: paged
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+![](banner.png)
+
+<center>
+
+<h1>Tarea 5: Bayesian Inference Part II</h1>
+
+</center>
+
+<center><strong>CC6104: Statistical Thinking</strong></center>
+
+#### **Integrantes :**
+
+-   Patricio Espinoza A.
+
+#### **Cuerpo Docente:**
+
+-   Profesor: Felipe Bravo M.
+-   Auxiliar: Matías Godoy
+-   Ayudantes: Scarleth Betancurt, Máximo Flores y Laura Maldonado
+
+#### **Fecha límite de entrega:**
+
+### **Índice:**
+
+1.  [Objetivo](#id1)
+2.  [Instrucciones](#id2)
+3.  [Referencias](#id3)
+4.  [Primera Parte: Preguntas Teóricas](#id4)
+5.  [Segunda Parte: Elaboración de Código](#id5)
+
+### **Objetivo**<a name="id1"></a>
+
+[Bienvenid\@s](mailto:Bienvenid@s){.email} a la primera tarea del curso
+Statistical Thinking. Esta tarea tiene como objetivo evaluar los
+contenidos teóricos de la primera parte del curso, los cuales se enfocan
+principalmente en introducirlos en la estadística bayesiana. Si aún no
+han visto las clases, se recomienda visitar los enlaces de las
+referencias.
+
+La tarea consta de una parte teórica que busca evaluar conceptos vistos
+en clases. Seguido por una parte práctica con el fin de introducirlos a
+la programación en R enfocada en el análisis estadístico de datos.
+
+### **Instrucciones:**<a name="id2"></a>
+
+-   La tarea se realiza en grupos de **máximo 2 personas**. Pero no
+    existe problema si usted desea hacerla de forma individual.
+-   La entrega es a través de u-cursos a más tardar el día estipulado en
+    la misma plataforma. A las tareas atrasadas se les descontará un
+    punto por día.
+-   El formato de entrega es este mismo **Rmarkdown** y un **html** con
+    la tarea desarrollada. Por favor compruebe que todas las celdas han
+    sido ejecutadas en el archivo html.
+-   Al momento de la revisión tu código será ejecutado. Por favor
+    verifica que tu entrega no tenga errores de compilación.
+-   No serán revisadas tareas desarrolladas en Python.
+-   Está **PROHIBIDO** la copia o compartir las respuestas entre
+    integrantes de diferentes grupos.
+-   Pueden realizar consultas de la tarea a través de U-cursos y/o del
+    canal de Discord del curso.
+
+### **Referencias:**<a name="id3"></a>
+
+Slides de las clases:
+
+-   [Introduction to Bayesian
+    Inference](https://github.com/dccuchile/CC6104/blob/master/slides/3_1_ST-bayesian.pdf)
+-   [Summarizing the
+    Posterior](https://github.com/dccuchile/CC6104/blob/master/slides/3_2_ST-posterior.pdf)
+
+Videos de las clases:
+
+-   Introduction to Bayesian Inference:
+    [video1](https://youtu.be/Gf2uuElPH0g)
+    [video2](https://youtu.be/5ZZ3PTPdZQw)
+    [video3](https://youtu.be/d_jXwM_-5jc)
+    [video4](https://youtu.be/yZW1V3X4J94)
+    [video5](https://youtu.be/-fw0ktR7psM)
+    [video6](https://youtu.be/0oK9M82sw8Q)
+    [video7](https://youtu.be/u7Qdw5rDDDU)
+-   Summarizing the Posterior: [video1](https://youtu.be/67o8wcZsgtk)
+    [video2](https://youtu.be/Xr8S1Uv_5GQ)
+    [video3](https://youtu.be/XJKyW4tYp_0)
+    [video4](https://youtu.be/OMipgV727wo)
+
+Documentación:
+
+-   [rethinking](https://github.com/rmcelreath/rethinking)
+-   [tidyr](https://tidyr.tidyverse.org)
+-   [purrr](https://purrr.tidyverse.org)
+-   [dplyr](https://dplyr.tidyverse.org)
+-   [ggplot2](https://ggplot2.tidyverse.org/)
+
+# Elaboración de Código<a name="id5"></a>
+
+En la siguiente sección deberá resolver cada uno de los experimentos
+computacionales a través de la programación en R. Para esto se le
+aconseja que cree funciones en R, ya que le facilitará la ejecución de
+gran parte de lo solicitado.
+
+Para el desarrollo preste mucha atención en los enunciados, ya que se le
+solicitará la implementación de métodos sin uso de funciones
+predefinidas. Por otro lado, Las librerías permitidas para desarrollar
+de la tarea 4 son las siguientes:
+
+```{r, eval=TRUE}
+# Manipulación de estructuras
+library(tidyverse)
+library(dplyr)
+library(tidyr)
+
+# Para realizar plots
+library(scatterplot3d)
+library(ggplot2)
+library(plotly)
+
+# Manipulación de varios plots en una imagen.
+library(gridExtra)
+
+# Análisis bayesiano
+library("rethinking")
+
+# p2
+library(boot)
+library(glmnet)
+```
+
+Si no tiene instalada la librería “rethinking”, ejecute las siguientes
+líneas de código para instalar la librería:
+
+```{r, eval=FALSE}
+install.packages("rethinking")
+```
+
+En caso de tener problemas al momento de instalar la librería con el
+código anterior, utilice las siguiente chunk:
+
+```{r, eval=FALSE}
+install.packages(c("mvtnorm","loo","coda"), repos="https://cloud.r-project.org/",dependencies=TRUE)
+options(repos=c(getOption('repos'), rethinking='http://xcelab.net/R'))
+install.packages('rethinking',type='source')
+```
+
+### **Pregunta 1: Estimación de la tasa de reclamos de seguros con MCMC**
+
+En el ámbito del riesgo financiero y de seguros, una compañía desea
+modelar la **cantidad diaria de reclamos** por accidentes menores, con
+el fin de proyectar su nivel de reservas.\
+Se asume que el número de reclamos diarios $Y_i$ sigue una distribución
+**Poisson** con parámetro $\lambda$, donde $\lambda$ representa la
+**tasa promedio de reclamos por día**.
+
+$$
+Y_i \sim \text{Poisson}(\lambda)
+$$
+
+La empresa tiene datos simulados de 100 días, con una tasa aproximada de
+8 reclamos diarios:
+
+```{r}
+set.seed(123)
+y <- rpois(100, lambda = 8)
+```
+
+Queremos estimar la **distribución posterior de** $\lambda$, asumiendo
+un prior débilmente informativo:
+
+$$
+\lambda \sim \text{Gamma}(\alpha, \beta), \quad \text{con } \alpha = 1,\; \beta = 1
+$$
+
+------------------------------------------------------------------------
+
+#### **Se pide**
+
+1.  **Defina la función de log densidad no normalizada** de la
+    distribución posterior, sin usar `dgamma()`, `dpois()` ni
+    `Gamma()`.\
+    Recuerde que la posterior es proporcional a: $$
+    f(\lambda\mid y) \propto \lambda^{\alpha + \sum y_i - 1} e^{-(\beta + n)\lambda}
+    $$ donde $n$ es el número de observaciones.
+
+2.  **Implemente el algoritmo de Metropolis–Hastings** para muestrear
+    $\lambda$:
+
+    -   Propuesta: $\lambda^* \sim N(\lambda^{(t-1)}, s^2)$
+    -   Rechace si $\lambda^* \le 0$
+    -   Use: `alpha = 1`, `beta = 1`, `lambda0 = 1`, `s = 1`, `N = 10^5`
+    -   Devuelva la cadena y la tasa de aceptación.
+    -   Cree una función
+        `metropolis_hastings(lambda0, N, y, alpha, beta, s)`.
+
+3.  **Analice la convergencia**:
+
+    -   Traceplot y densidad posterior para distintos `N` (por ejemplo:
+        $10^3, 10^4, 10^5$).
+    -   Comente cómo cambia la forma al aumentar el número de
+        iteraciones.
+
+4.  **Compare su resultado con la distribución Gamma teórica**\
+    (solo en esta parte puede usar `dgamma()`):\
+    $$
+    \lambda \mid y \sim \text{Gamma}(\alpha + \sum y_i,\, \beta + n)
+    $$ Sobreponga la densidad teórica a la obtenida por MCMC.
+
+5.  **Interprete brevemente:**
+
+    -   ¿Qué valor central de $\lambda$ obtiene (media o mediana
+        posterior)?
+    -   ¿Cuál es la incertidumbre (intervalo creíble al 95%)?
+
+------------------------------------------------------------------------
+
+```{r}
+# Parte 1
+set.seed(26)
+y <- rpois(100, lambda = 8)
+
+log_posterior <- function(lambda, y, alpha, beta) {
+  if (lambda <= 0) return(-Inf)
+  
+  n <- length(y)
+  sum_y <- sum(y)
+  
+  # Log de la posterior
+  log_post <- (alpha + sum_y - 1) * log(lambda) - (beta + n) * lambda
+  
+  return(log_post)
+}
+```
+
+```{r}
+# Parte 2
+
+metropolis_hastings <- function(lambda0, N, y, alpha, beta, s) {
+  # Inicialización
+  cadena <- numeric(N)
+  cadena[1] <- lambda0
+  aceptados <- 0
+  
+  # Iteraciones
+  for (t in 2:N) {
+    lambda_actual <- cadena[t - 1]
+    
+    # Propuesta: Normal(lambda_actual, s^2)
+    lambda_prop <- rnorm(1, mean = lambda_actual, sd = s)
+    
+    # Rechazar si lambda propuesto es negativo o cero
+    if (lambda_prop <= 0) {
+      cadena[t] <- lambda_actual
+      next
+    }
+    
+    # Calcular log densidades
+    log_post_actual <- log_posterior(lambda_actual, y, alpha, beta)
+    log_post_prop <- log_posterior(lambda_prop, y, alpha, beta)
+    
+    # Razón de aceptación 
+    log_alpha_ratio <- log_post_prop - log_post_actual
+    
+    # Decisión de aceptación
+    if (log(runif(1)) < log_alpha_ratio) {
+      cadena[t] <- lambda_prop
+      aceptados <- aceptados + 1
+    } else {
+      cadena[t] <- lambda_actual
+    }
+  }
+  
+  # Tasa de aceptación
+  tasa_aceptacion <- aceptados / N
+  
+  return(list(cadena = cadena, tasa_aceptacion = tasa_aceptacion))
+}
+```
+
+```{r}
+# Parte 3
+
+# parámetros
+alpha <- 1
+beta <- 1
+lambda0 <- 1
+s <- 1
+
+# tamaños de muestra
+N_valores <- c(1e3, 1e4, 1e5)
+
+# gráficos
+par(mfrow = c(3, 2), mar = c(4, 4, 2, 1))
+
+resultados <- list()
+
+for (i in 1:length(N_valores)) {
+  N <- N_valores[i]
+  
+  # Metropolis-Hastings
+  resultado <- metropolis_hastings(lambda0, N, y, alpha, beta, s)
+  resultados[[i]] <- resultado
+  
+  # Traceplot
+  plot(resultado$cadena, type = "l", 
+       main = paste("Traceplot (N =", formatC(N, format = "e", digits = 0), ")"),
+       xlab = "Iteración", ylab = expression(lambda),
+       col = "steelblue", lwd = 0.5)
+  abline(h = mean(resultado$cadena), col = "red", lwd = 2, lty = 2)
+  
+  # Densidad posterior
+  plot(density(resultado$cadena), 
+       main = paste("Densidad Posterior (N =", formatC(N, format = "e", digits = 0), ")"),
+       xlab = expression(lambda), ylab = "Densidad",
+       col = "darkblue", lwd = 2)
+  abline(v = mean(resultado$cadena), col = "red", lwd = 2, lty = 2)
+  
+  cat(sprintf("\nN = %.0e: Tasa de aceptación = %.3f\n", N, resultado$tasa_aceptacion))
+}
+```
+
+3.  **Analice la convergencia**:
+
+    -   Traceplot y densidad posterior para distintos `N` (por ejemplo:
+        $10^3, 10^4, 10^5$).
+    -   Comente cómo cambia la forma al aumentar el número de
+        iteraciones.
+
+RESPUESTA:       
+
+Para todos los valores de $N$, la cadena converge rápidamente a la región de alta probabilidad alrededor de $\lambda \approx 8$. Asimismo se puede ver una cantidad mucho mayor de Zig Zag en la visualización de la curva cuando $N$ aumenta, este ruido es un indicador de un buen mezclado de la cadena cuando $N$ aumenta ya que implica que hay una exploración eficiente del espacio de parámetros y al mismo tiempo hay una baja autocorrelación entre las muestras.
+        
+Asimismo, al incrementar $N$, la distribución muestreada converge a la forma analítica $\text{Gamma}$ verdadera, mejorando la precisión de la estimación, en particular:
+
+- $N = 10^3$: La densidad es irregular y presenta una forma sesgada o puede que hasta bimodal, lo que se debe al muestreo insuficiente y la fase inicial de inestabilidad.
+- $N = 10^4$: La forma se vuelve suave y unimodal, asemejándose claramente a la distribución Gamma teórica. Asimismo, la moda de la distribución se centra de manera estable alrededor de $\lambda \approx 8$.
+- $N = 10^5$: La densidad es extremadamente suave y bien definida, esto es el resultado de un muestreo mucho más exhaustivo, lo que garantiza que la distribución MCMC coincida fielmente con la distribución posterior teórica.
+
+
+```{r}
+# Parte 4
+
+# resultado con N = 10^5
+resultado_final <- resultados[[3]]
+
+# Parámetros de la distribución Gamma teórica
+alpha_post <- alpha + sum(y)
+beta_post <- beta + length(y)
+
+# Gráfico 
+par(mfrow = c(1, 1), mar = c(4, 4, 2, 1))
+
+hist(resultado_final$cadena, probability = TRUE, breaks = 50,
+     col = rgb(0.2, 0.5, 0.8, 0.5), border = "white",
+     main = expression("Comparación: MCMC vs Gamma Teórica"),
+     xlab = expression(lambda), ylab = "Densidad")
+
+# Densidad MCMC
+lines(density(resultado_final$cadena), col = "blue", lwd = 3)
+
+# Densidad teórica
+lambda_seq <- seq(min(resultado_final$cadena), max(resultado_final$cadena), length.out = 500)
+densidad_teorica <- dgamma(lambda_seq, shape = alpha_post, rate = beta_post)
+lines(lambda_seq, densidad_teorica, col = "red", lwd = 3, lty = 2)
+
+legend("topleft", 
+       legend = c("MCMC", "Gamma Teórica"),
+       col = c("blue", "red"), lwd = 3, lty = c(1, 2),
+       bty = "n")
+```
+
+4.  **Compare su resultado con la distribución Gamma teórica**\
+    (solo en esta parte puede usar `dgamma()`):\
+    $$
+    \lambda \mid y \sim \text{Gamma}(\alpha + \sum y_i,\, \beta + n)
+    $$ Sobreponga la densidad teórica a la obtenida por MCMC.
+    
+RESPUESTA:
+
+A partir del gráfico obtenido se puede observar el histograma de barras con la densidad de los valores de $\lambda$ obtenidos de la cadena MCM con N=1e+05, para el que ocurre que tanto la densidad suavizada MCMC (linea azul) como la distribución Gamma teórica (linea roja) coinciden.
+
+Esto valida la implementación del algoritmo de Metropolis-Hasting, ya que después de suficientes iteraciones ($N=1e+05$), el muestreo MCMC converge de manera efectiva a la verdadera distribución posterior, $\text{Gamma}(795, 101)$, consolidando así que las estimasiones bayesianas obtenidas a partir de la cadena MCMC son confiables.
+
+
+```{r}
+# Estadísticas posteriores MCMC
+media_post <- mean(resultado_final$cadena)
+mediana_post <- median(resultado_final$cadena)
+ic_95 <- quantile(resultado_final$cadena, probs = c(0.025, 0.975))
+
+cat(sprintf("\n Media posterior: %.3f", media_post))
+cat(sprintf("\n Mediana posterior: %.3f", mediana_post))
+cat(sprintf("\n Intervalo creíble 95%%: [%.3f, %.3f]", ic_95[1], ic_95[2]))
+
+# Estadísticas teóricas
+media_teorica <- alpha_post / beta_post
+var_teorica <- alpha_post / (beta_post^2)
+sd_teorica <- sqrt(var_teorica)
+
+cat(sprintf("\n\n Media teórica: %.3f", media_teorica))
+cat(sprintf("\n Desviación estándar teórica: %.3f", sd_teorica))
+
+cat(sprintf("\n\n Tasa de aceptación final: %.3f", resultado_final$tasa_aceptacion))
+cat(sprintf("\n Número de iteraciones: %.0e", N_valores[3]))
+```
+
+5.  **Interprete brevemente:**
+    
+RESPUESTA:
+
+-   ¿Qué valor central de $\lambda$ obtiene (media o mediana posterior)?
+
+La estimación central de la tasa promedio de reclamos diarios ($\lambda$) es aproximadamente 8.20 reclamos por día usando la media o la mediana posterior
+    
+-   ¿Cuál es la incertidumbre (intervalo creíble al 95%)?
+
+El Intervalo Creíble al 95\% es [7.642, 8.765]. Esto significa que existe un 95\% de credibilidad de que la tasa real de reclamos diarios $\lambda$ se encuentra dentro de este rango
+
+
+### **Pregunta 2: Evaluación de modelos, criterios de información y regularización**
+
+La predicción del **consumo de combustible (`mpg`)** de un vehículo es
+un ejemplo clásico de evaluación de modelos con diferentes niveles de
+complejidad. En esta pregunta se analizará cómo los métodos de
+**evaluación de modelos (AIC, BIC, Cross-Validation)** y la
+**regularización** ayudan a medir y mitigar el **underfitting** y el
+**overfitting**.
+
+------------------------------------------------------------------------
+
+#### **Datos**
+
+```{r}
+mpg <- read.csv("https://raw.githubusercontent.com/mwaskom/seaborn-data/master/mpg.csv")
+mpg <- subset(mpg, !is.na(horsepower) & !is.na(weight) & !is.na(mpg))
+```
+
+Variables relevantes:
+
+1.  `mpg`: consumo (millas por galón) → variable respuesta.
+2.  `horsepower`: potencia del motor
+3.  `weight`: peso del vehículo.
+
+------------------------------------------------------------------------
+
+#### **Se pide**
+
+1.  **Modelos polinomiales de complejidad creciente.**\
+    Ajuste modelos polinomiales de grado $d = 1, 2, 3, 4, 5, 6$ de la
+    forma: $$
+    \text{mpg} = \beta_0 + \sum_{i=1}^{d} \left(\beta_{1i} \text{horsepower}^i + \beta_{2i} \text{weight}^i\right) + \varepsilon
+    $$ Puede usar `lm()` y `poly()` para crear los términos
+    polinomiales.\
+    Reporte el **RSS (Residual Sum of Squares)** de cada modelo y
+    grafique el RSS vs. el grado del modelo.
+
+2.  **Criterios de información (AIC y DIC).**\
+    Para cada modelo ajustado, calcule el criterio: $$
+    \text{AIC}
+    $$
+
+    Puede usar `AIC()` directamente sobre los modelos (`lm` objects).\
+    Presente una tabla con el grado y AIC e identifique cuál modelo
+    equilibra mejor ajuste y complejidad.
+
+3.  **Cross-Validation.**\
+    Implemente validación cruzada con k = 10 (puede usar `cv.glm()` del
+    paquete `boot`) para comparar el **MSE de validación** promedio de
+    los mismos modelos.\
+    Grafique el MSE promedio vs. el grado $d$.\
+    Comente qué modelo generaliza mejor según el error de validación.
+
+4.  **Regularización con Ridge y Lasso.**
+
+    -   Usando el modelo de grado 6, aplique **Ridge** (`alpha = 0`)
+        usando `glmnet()`.
+    -   Use `cv.glmnet()` para estimar el valor óptimo de $\lambda^*$
+        (coeficiente de regularización) mediante validación cruzada.
+    -   Grafique la curva de error de CV en función de $\log(\lambda)$.
+    -   Compare las magnitudes de los coeficientes del modelo Ridge y el
+        modelo de grado 6 sin regularización.
+
+5.  **Discusión final.**
+
+    -   Compare los resultados obtenidos por AIC, Cross-Validation y
+        Regularización.
+    -   Identifique señales de **underfitting** (modelo demasiado
+        simple) y **overfitting** (modelo demasiado complejo).
+    -   Explique cómo la regularización contribuye a mejorar la
+        **capacidad de generalización** del modelo.
+
+------------------------------------------------------------------------
+
+```{r}
+# Parte 1
+
+# Grados 
+grados <- 1:6
+n_modelos <- length(grados)
+
+# resultados
+modelos <- list()
+rss_valores <- numeric(n_modelos)
+aic_valores <- numeric(n_modelos)
+bic_valores <- numeric(n_modelos)
+
+# modelos
+for (i in 1:n_modelos) {
+  d <- grados[i]
+  
+  # términos polinomiales
+  formula <- as.formula(paste("mpg ~ poly(horsepower,", d, ", raw=TRUE) + poly(weight,", d, ", raw=TRUE)"))
+  
+  # Ajustar el modelo
+  modelo <- lm(formula, data = mpg)
+  modelos[[i]] <- modelo
+  
+  # RSS (Residual Sum of Squares)
+  rss_valores[i] <- sum(residuals(modelo)^2)
+  
+  # AIC y BIC
+  aic_valores[i] <- AIC(modelo)
+  bic_valores[i] <- BIC(modelo)
+  
+  cat(sprintf("Grado %d: RSS = %.2f, AIC = %.2f, BIC = %.2f\n", d, rss_valores[i], aic_valores[i], bic_valores[i]))
+}
+
+# Gráfico RSS vs Grado
+par(mfrow = c(2, 2), mar = c(4, 4, 3, 2))
+
+plot(grados, rss_valores, type = "b", pch = 19, col = "steelblue", lwd = 2,
+     xlab = "Grado del Polinomio", ylab = "RSS",
+     main = "RSS vs Complejidad del Modelo",
+     panel.first = grid())
+points(grados[which.min(rss_valores)], min(rss_valores), 
+       col = "red", pch = 19, cex = 2)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+RESPUESTA PARTE 1:
+
+A través de los resultados y de la gráfica podemos ver que al incrementar el grado del modelo AIC mejora (es menor), es decir cumple con capturar mejor la relación de las variables. Mientras que por otro lado BIC aumenta, lo cual es coherente con que un BIC mayor implica una complejidad mayor y por tanto se penaliza más (BIC más alto es peor.
+
+Asimismo, se puede observar de la gráfica que el RSS disminuye a medida que se incrementa el grado del polinomio del modelo, indicando un mejor ajuste a los datos.
+
+
+```{r}
+# Parte 2
+
+# Tabla co los resultados
+resultados_tabla <- data.frame(
+  Grado = grados,
+  RSS = round(rss_valores, 2),
+  AIC = round(aic_valores, 2),
+  BIC = round(bic_valores, 2)
+)
+
+print(resultados_tabla)
+
+# mejores modelos
+mejor_aic <- which.min(aic_valores)
+mejor_bic <- which.min(bic_valores)
+
+cat(sprintf("\nMejor modelo según AIC: Grado %d (AIC = %.2f)\n", grados[mejor_aic], aic_valores[mejor_aic]))
+cat(sprintf("Mejor modelo según BIC: Grado %d (BIC = %.2f)\n", grados[mejor_bic], bic_valores[mejor_bic]))
+
+# Gráfico AIC vs Grado
+plot(grados, aic_valores, type = "b", pch = 19, col = "darkgreen", lwd = 2,
+     xlab = "Grado del Polinomio", ylab = "AIC",
+     main = "AIC vs Complejidad del Modelo",
+     panel.first = grid())
+points(grados[mejor_aic], aic_valores[mejor_aic], 
+       col = "red", pch = 19, cex = 2)
+
+# Gráfico BIC vs Grado
+plot(grados, bic_valores, type = "b", pch = 19, col = "purple", lwd = 2,
+     xlab = "Grado del Polinomio", ylab = "BIC",
+     main = "BIC vs Complejidad del Modelo",
+     panel.first = grid())
+points(grados[mejor_bic], bic_valores[mejor_bic], 
+       col = "red", pch = 19, cex = 2)
+```
+
+
+
+
+
+
+
+
+RESPUESTA PARTE 2:
+
+De la tabla podemos ver que el mejor modelo según el criterio AIC fue el polinomio de grado 6 con AIC=2189, mientras que para el criterio BIC el mejor fue el polinomio de grado 2 con BIC=2217.
+
+De las gráficas podemos ver que, para este conjunto de datos, un polinomio de mayor grado captura mejor los datos y tiende a reducir AIC notoriamente (es mejor), mientras que por otro lado, a partir del grado 2 el criterio BIC comienza a aumentar continuamente (coherente con que este criterio se centra en la complejodad del modelo). Un aspecto interesante de los resultados de BIC es que el modelo de grado 1 (BIC=2265) tiene mayor complejidad que uno de grado 6 (BIC=2244), esto se debe a que el criterio BIC penaliza tanto por mal ajuste como por complejidad, y en particular, el polinomio de grado 1 tiene el peor ajuste de todos los modelos.
+
+
+
+
+```{r}
+# Parte 3
+
+set.seed(26)
+k <- 10
+cv_mse <- numeric(n_modelos)
+
+for (i in 1:n_modelos) {
+  d <- grados[i]
+  
+  # fórmula de mpg
+  formula <- as.formula(paste("mpg ~ poly(horsepower,", d, ", raw=TRUE) + poly(weight,", d, ", raw=TRUE)"))
+  
+  # Ajustar modelo GLM
+  modelo_glm <- glm(formula, data = mpg)
+  
+  # Validación cruzada
+  cv_resultado <- cv.glm(mpg, modelo_glm, K = k)
+  cv_mse[i] <- cv_resultado$delta[1]  # MSE promedio
+  
+  cat(sprintf("Grado %d: CV-MSE = %.4f\n", d, cv_mse[i]))
+}
+
+# mejor modelo por CV
+mejor_cv <- which.min(cv_mse)
+cat(sprintf("\nMejor modelo según CV: Grado %d (MSE = %.4f)\n", grados[mejor_cv], cv_mse[mejor_cv]))
+
+# Gráfico CV-MSE vs Grado
+plot(grados, cv_mse, type = "b", pch = 19, col = "darkorange", lwd = 2,
+     xlab = "Grado del Polinomio", ylab = "CV-MSE",
+     main = "Error de Validación Cruzada vs Complejidad",
+     panel.first = grid())
+points(grados[mejor_cv], cv_mse[mejor_cv], 
+       col = "red", pch = 19, cex = 2)
+```
+
+RESPUESTA PARTE 3:
+
+A partir del gráfico se puede obsevar que MSE mediante CV varía de forma intercalada entre el rango 15.5 y 15.9 para polinomios de grado mayor a 2, alcanzando su mínimo para un polinomio de grado 5 con MSE= 15.5525
+
+
+```{r}
+# Parte 4
+set.seed(26)
+
+# mododelo de grado 6
+d <- 6
+X <- model.matrix(mpg ~ poly(horsepower, d) + poly(weight, d), data = mpg)[, -1]
+y <- mpg$mpg
+
+# Ridge Regression (alpha = 0)
+ridge_cv <- cv.glmnet(X, y, alpha = 0, nfolds = 10)
+
+# Lambda óptimo
+lambda_optimo <- ridge_cv$lambda.min
+
+cat(sprintf("Lambda óptimo (mínimo): %.4f\n", lambda_optimo))
+cat(sprintf("Log lambda óptimo: %.4f\n", log(lambda_optimo)))
+
+# Error de CV del modelo Ridge con lambda óptimo
+cv_mse_ridge <- ridge_cv$cvm[ridge_cv$lambda == lambda_optimo]
+cat(sprintf("\nCV-MSE Ridge (λ = %.4f): %.2f\n", lambda_optimo, cv_mse_ridge))
+
+# Gráfico de curva de CV
+par(mfrow = c(1, 2), mar = c(5, 5, 6, 2))
+plot(ridge_cv, main = "Ridge: Error de CV vs log(λ)")
+abline(v = log(lambda_optimo), col = "red", lty = 2, lwd = 2)
+
+# Modelo Ridge ajustado con el lambda óptimo
+ridge_modelo <- glmnet(X, y, alpha = 0, lambda = lambda_optimo)
+coef_ridge <- as.vector(coef(ridge_modelo))[-1]      
+
+# Modelo sin regularización
+modelo_sin_reg <- glm(mpg ~ poly(horsepower, d) + poly(weight, d), data = mpg)
+coef_sin_reg <- coef(modelo_sin_reg)[-1]
+  
+cv_sin_reg <- cv.glm(mpg, modelo_sin_reg, K = 10)
+cv_mse_sin_reg <- cv_sin_reg$delta[1]  # MSE promedio de CV
+
+cat(sprintf("CV-MSE Sin Regularización: %.2f\n", cv_mse_sin_reg))
+
+# Nombres de coeficientes
+nombres_coef <- colnames(X)
+
+# Data frame comparativo
+comparacion_coef <- data.frame(
+  Variable = nombres_coef,
+  Sin_Regularizacion = round(coef_sin_reg, 4),
+  Ridge = round(coef_ridge, 4),
+  Diferencia = round(abs(coef_sin_reg) - abs(coef_ridge), 4),
+  Reduccion_Porcentual = round(100 * (1 - abs(coef_ridge) / abs(coef_sin_reg)), 2)
+)
+
+print(comparacion_coef)
+
+# Comparación de coeficientes
+par(mfrow = c(1, 1), mar = c(10, 4, 3, 2))
+barplot(rbind(abs(coef_sin_reg), abs(coef_ridge)), 
+        beside = TRUE, 
+        col = c("steelblue", "coral"),
+        names.arg = 1:length(coef_sin_reg),
+        xlab = "", 
+        ylab = "Magnitud (valor absoluto)",
+        main = "Magnitud de Coeficientes: Sin Regularización vs Ridge",
+        las = 2, 
+        legend = c("Sin Regularización", "Ridge"),
+        args.legend = list(x = "topright", cex = 0.9))
+mtext("Término del Polinomio", side = 1, line = 5)
+```
+
+
+
+RESPUESTA PARTE 4:
+
+Del grafico de la curva de error de CV en función de log(λ) podemos ver que a medida que esta tiende a 0, y en particular, se acerca a $log(\lambda_{optimo}$), el MSE de CV disminuye considerablemente.
+
+Al comparar las magnitudes de los coeficientes del modelo Ridge y del modelo de grado 6 sin regularización, podemos ver del gráfico que en general Ridge tiende a disminuir la magnitud de los coeficientes. En particular dentro de los cambios más grande se encuentra horsepower en el polinomio ortogonal de grado 4, donde paso de 0.5636 sin regularización a 0.0978 con Ridge. Asimismo, para weight en el polinomio ortogonal de grado 5 se vio un cambio de -0.4297 sin regularización a 0.0697 con Ridge.    
+
+
+
+RESPUESTA PARTE 5:
+
+1) Compare los resultados obtenidos por AIC, Cross-Validation y Regularización.
+
+Mediante AIC se obtuvo que el mejor modelo fue el de grado 6 ya que presentaba un mejor ajuste a los datos, por BIC que penaliza mucho más la complejidad del modelo se obtuvo que el mejor era el de grado 2, mientras que por Cross-Validation se obtuvo que el mejor modelo fue uno de grado 5 (obtuvo el menor MSE). Finalmente, al comparar MSE con la regularización de un modelo de grado 6 se obtuvo que el uso de Ridge disminuyo CV-MSE en 0.17:
+
+- CV-MSE Sin Regularización: 15.87
+
+- CV-MSE Ridge (λ = 0.6487): 15.70
+
+Si bien Ridge proporcionó una regularización que redujo el MSE, esta sigue siendo más alta que la obtenida por el polinomio de grado 5 en Cross-Validation (CV-MSE=15.55). Como mediante el criterio de AIC el polinomio de grado 5 obtuvo AIC = 2190.68 y el de grado 6 AIC = 2189.00 (diferencia muy pequeña) se puede concluir que el mejor modelo es el polinomial de grado 5.
+
+
+2) Identifique señales de underfitting (modelo demasiado simple) y overfitting (modelo demasiado complejo).
+
+Dentro de las señales de underfitting tenemos que esto ocurre cuando hay un RSS alto (modelo no captura bien los patrones), el AIC también está mas alto de lo normal indicando un mal ajuste y la validación cruzada mediante MSE es alta. Estas señales ocurren especificamente para el modelo poliniomial de grado 1, que obtuvo el RSS, AIC y CV-MSE más alto a comparación de los otros modelos que estuvieron más cerca entre sí.
+
+En cuanto a las señales de overfitting, esta que el RSS baje pero el AIC o BIC aumenten, al igual que el CV-MSE lo que indicaria que el modelo se esta ajustando mucho a los datos de entrenamiento (Aunque AIC mejoraria por un mejor ajuste, también penaliza los errores así que aumentaría). Otra señal es mediante los coeficientes, en los que algunos pueden ser notoriamente más grandes que otros, indicando que el modelo falla en capturar la relación/patrón real de los datos.
+
+El caso más cercano de esto dentro de los modelos sería para el de grado 6, para el cual aunque se obtuvo un AIC y RSS levemente menores al de grado 5, aumentaron tanto su complejidad mediante el criterio BIC como también el CV-MSE, donde desde uno de grado 5 a uno de grado 6 hubo un aumento de 0.33
+
+3) Explique cómo la regularización contribuye a mejorar la capacidad de generalización del modelo.
+
+La regularización permite la reducción de las magnitudes de los coeficientes altos que contribuyen al overfitting del modelo. Asimismo, como los coeficientes se regularizan, resultan ser menos sensibles a pequeños cambios en los datos de entrenamiento, dandole una mejor capacidad de generalización al modelo.
+
+En general, la reducción de magnitudes mediante regularización Ridge evita que el modelo se ajuste excesivamente al ruido y por tanto pierda capacidad de generalización.
+
+
+<hr />
+
+<p style="text-align: center;">
+
+A work by <a href="https://github.com/dccuchile/CC6104">CC6104</a>
+
+</p>
+
+<!-- Add icon library -->
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.1/css/all.css">
+
+<!-- Add font awesome icons -->
+
+<p style="text-align: center;">
+
+<a href="https://github.com/dccuchile/CC6104"><i class="fab fa-github" style='font-size:30px'></i></a>
+
+</p>
+
+<p style="text-align: center;">
+
+<a href="https://discord.gg/XCbQvGs3Uf"><i class="fab fa-discord" style='font-size:30px'></i></a>
+
+</p>
+
+ 

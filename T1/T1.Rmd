@@ -1,0 +1,857 @@
+---
+title: "Tarea 1"
+output:
+  html_document:
+    df_print: paged
+---
+
+![](banner.png)
+
+<center>
+
+<h1>Tarea 1: Foundations</h1>
+
+</center>
+
+<center><strong>CC6104: Statistical Thinking</strong></center>
+
+#### **Integrantes :**
+
+-   Patricio Espinoza A.
+
+#### **Cuerpo Docente:**
+
+-   Profesor: Felipe Bravo M.
+-   Auxiliares: Matías Godoy
+-   Ayudantes: Scarleth Betancurt, Máximo Flores y Laura Maldonado
+
+### **Índice:**
+
+1.  [Objetivo](#id1)
+2.  [Instrucciones](#id2)
+3.  [Referencias](#id3)
+4.  [Elaboración de Código](#id4)
+
+### **Objetivo**<a name="id1"></a>
+
+[Bienvenid\@s](mailto:Bienvenid@s){.email} a la primera tarea del curso Statistical Thinking. Esta tarea tiene como objetivo evaluar los contenidos teóricos de la primera parte del curso, los cuales se enfocan principalmente en análisis exploratorio de datos y conceptos introductorios de probabilidades. Si aún no han visto las clases, se recomienda visitar los enlaces de las referencias.
+
+La tarea consta de ejercicios prácticos con el fín de introducirlos a la programación en R enfocada en el análisis estadístico de datos.
+
+### **Instrucciones:**<a name="id2"></a>
+
+-   La tarea se realiza en grupos de **máximo 2 personas**. Pero no existe problema si usted desea hacerla de forma individual.
+-   La entrega es a través de u-cursos a más tardar el día estipulado en la misma plataforma. A las tareas atrasadas se les descontará un punto por día.
+-   El formato de entrega es este mismo **Rmarkdown** y un **html** con la tarea desarrollada. Por favor compruebe que todas las celdas han sido ejecutadas en el archivo html.
+-   Al momento de la revisión tu código será ejecutado. Por favor verifica que tu entrega no tenga errores de compilación.
+-   No serán revisadas tareas desarrolladas en Python.
+-   Está **PROHIBIDO** la copia o compartir las respuestas entre integrantes de diferentes grupos.
+-   Pueden realizar consultas de la tarea a través de U-cursos y/o del canal de Discord del curso.
+
+### **Referencias:**<a name="id3"></a>
+
+Slides de las clases:
+
+-   [Introduction to Statistical Thinking](https://github.com/dccuchile/CC6104/blob/master/slides/1_1_ST-intro.pdf)
+-   [Introduction to R](https://github.com/dccuchile/CC6104/blob/master/slides/1_2_ST-R.pdf)
+-   [Descriptive Statistics](https://github.com/dccuchile/CC6104/blob/master/slides/1_3_ST-explore.pdf)
+-   [Probability](https://github.com/dccuchile/CC6104/blob/master/slides/1_4_ST-prob.pdf)
+
+Videos de las clases:
+
+-   Introduction to Statistical Thinking: [video1](https://youtu.be/X4SqJu6lExM) [video2](https://youtu.be/YbiQU5TTBX4)
+-   Introduction to R: [video1](https://youtu.be/MbeLD3hWWVo) [video2](https://youtu.be/9W_eWCy86F4) [video3](https://youtu.be/QvFXSw2-1r4) [video4](https://youtu.be/y4JY7klrbfQ)
+-   Descriptive Statistics: [video1](https://youtu.be/kWNskZ8_98o) [video2](https://youtu.be/_FJ8x9M4b1w) [video3](https://youtu.be/m7VBNZ2mYWI) [video4](https://youtu.be/ylGMJ_aSQk0)
+-   Probability: [video1](https://youtu.be/R9AVYV73m1M) [video2](https://youtu.be/zubh1jbRiKE) [video3](https://youtu.be/uiwToagp0z4) [video4](https://youtu.be/RlhN3t_VIyw) [video5](https://youtu.be/4kV1dBaeWVc) [video6](https://youtu.be/MGyXc70JdSk)
+
+### **Elaboración de código**<a name="id4"></a>
+
+En la siguiente sección deberá resolver cada uno de los experimentos computacionales a través de la programación en R. Para esto se le aconseja que cree funciones en R, ya que le facilitará la ejecución de gran parte de lo solicitado.
+
+```{r}
+#Importación de Librerías útiles
+library(ggplot2)
+library(tidyr)
+```
+
+## Pregunta 1: Visualización de Datos
+
+Para esta pregunta usted deberá trabajar en base al conjunto de datos `hearth_database.csv`, el cual esta compuesto por las siguientes variables:
+
+-   target: Señala si el paciente tuvo un infarto.
+-   sex: Sexo de los sujetos de prueba.
+-   fbs: Azúcar en la sangre con ayunas. Esta variable señala solo si se encuentra \<=120 o \>120.
+-   exang: Angina de pecho inducida por el ejercicio.
+-   cp: Tipo de dolor de pecho.
+-   restecg: Resultados electrocardiográficos en reposo.
+-   slope: Pendiente del segmento ST máximo de ejercicio.
+-   ca: Número de buques principales.
+-   thal: Thalassemia.
+-   age: Edad en años.
+-   trestbps: Presión arterial en reposo.
+-   chol: colesterol sérico en mg/dl.
+-   thalach: Frecuencia cardíaca máxima alcanzada.
+-   oldpeak: Depresión del ST inducida por el ejercicio en relación con el reposo.
+
+En base al dataset propuesto realice un análisis exploratorio de los datos (EDA). Para su análisis enfoquen el desarrollo en las siguientes tareas:
+
+-   [ ] Obtenga la media, mediana, quintiles y valores máximos desde los datos que componen el dataset.
+-   [ ] Obtenga la Matriz de correlación de Pearson y visualice la relación entre las variables numéricas.
+-   [ ] Visualice los boxplot para las variables numéricas.
+-   [ ] Visualice a través de un histograma como distribuyen las variables respecto a los TARGET.
+
+**Respuesta:**
+
+```{r}
+# dataset
+dataset <- read.csv("hearth_database.csv", header = TRUE, sep = ",")
+```
+
+```{r}
+# Media
+medias <- sapply(dataset, function(x) if(is.numeric(x)) mean(x, na.rm = TRUE))
+# Solo aquellas numericas
+medias_numericas <- medias[sapply(medias, is.numeric)]
+print(medias_numericas)
+```
+
+```{r}
+# Mediana
+medianas <- sapply(dataset, function(x) if(is.numeric(x)) median(x, na.rm = TRUE))
+# Solo aquellas numericas
+medianas_numericas <- medianas[sapply(medianas, is.numeric)]
+print(medianas_numericas)
+```
+
+```{r}  
+# Quintiles
+dataset_numerico <- dataset[sapply(dataset, is.numeric)]
+quintiles <- lapply(dataset_numerico, quantile, probs = seq(0, 1, 0.2), na.rm = TRUE)
+print(quintiles)
+```
+
+
+# Valores máximos 
+
+------------------------------------------------------------------------
+
+## Pregunta 2: Teorema Central del Limite
+
+Una institución financiera está desarrollando un nuevo modelo de evaluación de riesgo basado en los **promedios de gasto mensual con tarjeta de crédito**. Sin embargo, los montos individuales de compra no siguen una distribución normal: hay muchas compras pequeñas y ocasionalmente algunas muy grandes.
+
+Antes de aplicar herramientas estadísticas que **asumen normalidad**, el equipo necesita validar si el **Teorema Central del Límite (TCL)** permite aproximar la distribución de los promedios muestrales a una normal, a pesar de la forma de los datos originales.
+
+Para aquello, deberás simular datos que representen los montos de compra con tarjeta de crédito, considerando que estos no necesariamente siguen una distribución normal. En primer lugar, genere datos a partir de tres distribuciones distintas: una distribución normal, que servirá como caso de referencia; una distribución gamma y una tercera distribución a tu elección.
+
+A continuación, para cada una de estas distribuciones, realiza un proceso de muestreo aleatorio. Cada muestra debe tener un tamaño fijo de 100 observaciones. Calcula la media de cada una de estas muestras y repite el proceso completo utilizando distintos números de repeticiones: 10, 100, 1000 y 5000 medias muestrales **para cada distribución**. Luego, grafica las distribuciones resultantes de las medias muestrales.
+
+Finalmente, analiza los resultados. ¿El efecto ocurre con el mismo número de muestreo para todas las distribuciones?.
+
+*Nota: Los parámetros de las distribuciones se pueden elegir libremente.*
+
+**Respuesta**
+
+
+```{r} 
+# Definición de variables o estructuras necesarias para el muestreo.
+set.seed(27122021)
+n <- 100                                  # observaciones fijas para cada muestra                 
+tamaño_muestra <- c(10,100,1000,5000)     # nro de repeticiones para cada distribucion
+
+# Función para generar medias muestrales a partir de una distribución señalada
+# Args:
+#   distrib:      Nombre de la función de generación de una distribución
+#   parametros:   Parámetros para la distribución
+#   n:            Número de observaciones
+#   repeticiones: Repeteciones a realizar para cada distribución
+
+simular_medias <- function(distrib, params, n, reps) {
+  medias <- numeric(reps)  # Vector para almacenar las medias muestrales
+  
+  # Para cada repetición en reps
+  for (i in 1:reps) {
+    # Se genera la muestra de tamaño n a partir de la distribución utilizada 
+    # (con sus respectivos parametros)
+    muestra <- do.call(distrib, c(list(n = n), params))
+    
+    # Almacenar la media de la muestra en la variable a retornar
+    medias[i] <- mean(muestra)
+  }
+
+  return(medias)
+}
+```
+
+```{r} 
+resultados <- list()
+
+# Distribuciones y parámetros
+# 1. Distribución normal
+# 2. Distribución gamma
+# 3. Distrubición a elección: uniforme
+distribuciones <- list(
+  normal = list(distrib="rnorm", params=list(mean=50, sd=10)),
+  gamma  = list(distrib="rgamma", params=list(shape=25, rate=0.5)),  # 2 y 0,1
+  uniforme = list(distrib="runif", params=list(min=32.68, max=67.32)) # 0 y 100
+)
+
+# Simulación
+# Para cada distribución en el listado de 'distribuciones'
+for (dist_name in names(distribuciones)) {
+  # Almacenar la información de la distribución
+  dist_info <- distribuciones[[dist_name]]
+  # Para cada cantidad de repeticiones: 10, 100, 1000, 5000
+  for (rep in tamaño_muestra) {
+    # Hacer el llamado al simulador de medias para la distribución
+    medias <- simular_medias(dist_info$distrib, dist_info$params, n, rep)
+    # Guardar los resultados en la lista definida anteriormente
+    resultados[[paste(dist_name, rep, sep="_")]] <- data.frame(
+      Distribucion = dist_name,
+      Repeticiones = rep,
+      MediaMuestral = medias
+    )
+  }
+}
+```
+
+```{r} 
+# Visualizacion
+
+# Combinar resultados
+df_medias <- do.call(rbind, resultados)
+
+# Gráficos
+ggplot(df_medias, aes(x=MediaMuestral, fill=factor(Repeticiones))) +
+  geom_histogram(bins=30, alpha=0.5, position="identity") +
+  facet_wrap(~Distribucion, scales="free") +
+  labs(
+    title = "Distribución de medias muestrales por distribución y repeticiones",
+    x = "Media muestral",             
+    y = "Cantidad de medias",         
+    fill = "Número de repeticiones"   
+  ) +
+  theme_minimal()
+```
+```{r}
+# Combinar resultados
+df_medias <- do.call(rbind, resultados)
+
+# Gráficos organizados por distribución (filas) y repeticiones (columnas)
+ggplot(df_medias, aes(x = MediaMuestral)) +
+  geom_histogram(bins = 30, fill = "steelblue", alpha = 0.7) +
+  facet_grid(Distribucion ~ Repeticiones, scales = "free") +
+  labs(
+    title = "Distribución de medias muestrales por distribución y número de repeticiones",
+    x = "Media muestral",             
+    y = "Cantidad de medias"
+  ) +
+  theme_minimal()
+```
+
+En base a ambos gráficos, en los cuales se ajustan los parametros de las distribuciones para que los datos coincidan en media y desviación estándar, es posible observar que aunque los montos individuales de compra no necesariamente siguen una distribución normal, cuando se iteran las cantidades de repeticiones la media muestral si tiene de a seguir una distribución normal. Esto se puede empezar a notar para las 1000 repeticiones, y es aún más marcado para las 5.000.
+
+
+------------------------------------------------------------------------
+
+## Pregunta 3: Ley de los Grandes Numeros.
+
+#### Frecuencia de Números Primos en un Dado
+
+Se sabe que al lanzar un dado justo de 6 caras, hay tres resultados primos posibles: 2, 3 y 5. Por lo tanto, la probabilidad teórica de que salga un número primo en un lanzamiento es de $\frac{3}{6}=0.5$
+
+Simule el experimento de lanzar un dado equilibrado 1000 veces y observe cómo evoluciona la frecuencia relativa de obtener un número primo a medida que aumenta el número de lanzamientos. Grafique el experimento para las secuencias de intentos que van desde 1 a 1000, señalando el valor en que converge la probabilidad de obtener un número primo.
+
+Concluya desde que cantidad de lanzamientos podemos notar la convergencia hacia la probabilidad teórica
+
+**Respuesta**
+
+
+```{r}
+# Inicializar lista vacía para ir guardando frecuencias
+set.seed(27122021)  
+n_lanzamientos <- 1000
+frecuencia_relativa <- c()
+
+# Contador de primos
+conteo_primos <- 0
+
+# Resultados
+caras <- 1:6
+primos <- c(2, 3, 5)
+
+# Simular lanzamientos uno a uno
+for (i in 1:n_lanzamientos) {
+  # Lanzar el dado (escogiendo un número aleatorio del vector de caras)
+  lanzamiento <- sample(caras, 1, replace = TRUE)   
+  if (lanzamiento %in% primos) {
+    conteo_primos <- conteo_primos + 1              # Si fue primo
+  }
+  frecuencia_relativa[i] <- conteo_primos / i       # Guardar frecuencia relativa acumulada
+}
+
+# Probabilidad teorica
+p_teorica <- 0.5   # 3/6 = 0.5
+
+# Grafico
+plot(1:n_lanzamientos, frecuencia_relativa, type = "l", col = "blue",
+     xlab = "Número de lanzamientos", ylab = "Frecuencia relativa",
+     main = "Frecuencia relativa de numeros primos al lanzar un dado")
+abline(h = p_teorica, col = "red", lty = 2, lwd = 2) # Línea teórica
+legend("topright", legend = c("Frecuencia relativa", "Probabilidad teórica (0.5)"),
+       col = c("blue", "red"), lty = c(1,2), lwd = 2)
+```
+La probabilidad teórica es 0.5, en particular desde los 200 lanzamientos ya se acerca a este valor, convergiendo desde arriba. En particular, desde aproximadamente los 700 lanzamientos se tiene que la frecuencia relativa ha logrado converger a la probabilidad teórica.
+
+#### El problema de Monty Hall
+
+Remontándonos en la televisión del año 1963, en USA existía un programa de concursos donde los participantes debían escoger entre 3 puertas para ganar un premio soñado. El problema del concurso era que solo detrás de 1 puerta estaba el premio mayor, mientras que detrás de las otras dos habían cabras como "premio".
+
+Una de las particularidades de este concurso, es que cuando el participante escogía una puerta, el animador del show abría una de las puertas que no fue escogida por el participante (Obviamente la puerta abierta por el animador no contenía el premio). Tras abrir la puerta, el animador consultaba al participante si su elección era definitiva, o si deseaba cambiar la puerta escogida por la otra puerta cerrada. Un vídeo que puede ayudar a comprender mejor este problema en el siguiente [link](https://www.youtube.com/watch?v=rSa_uiKncEI).
+
+Imagine que usted es participante del concurso y desea calcular la probabilidad de ganar el gran premio **si cambia de puerta** en el momento que el animador se lo ofrece. Utilizando listas/arrays/vectores simule las puertas del concurso, dejando aleatoriamente el premio en alguna posición del array. Hecho esto, genere un numero de forma aleatoria para escoger una de las puerta (posiciones de la estructura), para luego ver si cambiando de posición tendrá mayores posibilidades de ganar el premio. Genere N veces el experimento y grafique cada una de las iteraciones, tal como se hizo en el ejercicio de las monedas.
+
+<p align="center">
+
+<img src="https://brilliant-staff-media.s3-us-west-2.amazonaws.com/tiffany-wang/gWotbuEdYC.png" width="350"/>
+
+</p>
+
+**Respuesta:**
+
+```{r}
+# Creamos una función que simula el juego
+# Args:
+#   cambiar: Indica si el jugador cambia o no su elección luego de que el presentador abra una puerta
+
+montyhall <- function(cambiar = TRUE){
+  Puertas <- sample(1:3,3)                   # Puertas donde la posición que tiene el 3 es el premio
+  puerta_premio <- which(Puertas == 3)       # Puerta de premio (indice para el array Puertas)
+  puerta_jugador <- sample(1:3,1)            # Elección del participante. (indice para el array Puertas)
+
+  #cat("Puertas:", Puertas, "\n")
+  #cat("Puerta del premio (indice):", puerta_premio, "\n")
+  #cat("Puerta del jugador (indice):", puerta_jugador, "\n\n")
+
+  puertas_disponibles <- setdiff(1:3, c(puerta_premio, puerta_jugador))
+  #cat("Puertas que se pueden abrir por el presentador (indices):", puertas_disponibles, "\n")
+  
+  # Si el vector puertas_disponibles es de una sola dimensión
+  # entonces R genera un vector desde 1 hasta dicho numero
+  # Ej: sample([2],1) => sample ([1,2],1)
+  if(length(puertas_disponibles) == 1) {
+    puerta_abierta <- puertas_disponibles[1]
+  } else {
+    puerta_abierta <- sample(puertas_disponibles, 1)
+  }
+  
+  #cat("Puerta abierta por el presentador:", puerta_abierta, "\n")
+  
+  if(cambiar){
+    puerta_jugador <- setdiff(1:3, c(puerta_jugador, puerta_abierta))
+    #cat("Jugador cambia a la puerta:", puerta_jugador, "\n")
+  }
+  
+  #cat("Gano o perdio", Puertas[puerta_jugador] == 3, "\n")
+  #cat("------------------------\n")
+  
+  return(Puertas[puerta_jugador] == 3)
+}
+
+# Función para simular N juegos y calcular la proporción acumulada de victorias
+# Args:
+#   n: Cantidad de juegos a simular
+#   cambiar_puerta: Indica si en la simulación, el jugador cambia de puerta o no
+
+n_juegos <- function(n = 10, cambiar_puerta = TRUE){
+  resultados <- replicate(n, montyhall(cambiar = cambiar_puerta))
+  proporcion_acumulada <- cumsum(resultados) / (1:n)
+  return(proporcion_acumulada)
+}
+
+set.seed(27122021)
+
+# ------------------------------------------------ #
+# Simulación: Ganar al cambiar de puerta
+cambiar <- n_juegos(100, cambiar_puerta = TRUE) 
+# Simulación: Ganar al mantener la puerta
+no_cambiar <- n_juegos(100, cambiar_puerta = FALSE) 
+
+# ------------------------------------------------ #
+# Grafico
+plot(cambiar, type = "l", col = "blue", ylim = c(0,1),
+     xlab = "Número de juegos", ylab = "Proporción acumulada de victorias",
+     main = "Problema de Monty Hall")
+lines(no_cambiar, col = "red")
+abline(h = 2/3, col = "blue", lty = 2) # Si el jugador cambia de eleccion debe converger a 2/3
+abline(h = 1/3, col = "red", lty = 2)  # Si el jugador no cambia de elección debe converger a 1/3
+legend("topright", legend = c("Cambiando", "Sin cambiar"),
+       col = c("blue", "red"), lty = c(1,2), lwd = 2)
+```
+
+
+
+------------------------------------------------------------------------
+
+## Pregunta 4: ¿Independencia?
+
+Se dispone de dos urnas, Urna1 y Urna2, cada una contiene bolas numeradas del 1 al 8, y cada bola es igualmente probable de ser extraída.
+
+Definamos los eventos:
+
+-   Evento A: que la bola extraída de la **Urna1** sea un número par.
+
+-   Evento B: que la bola extraída de la **Urna2** sea un número menor o igual a 5.
+
+Primero, calcule las probabilidades teóricas de cada evento. Luego, simule 1000 extracciones de bolas (una de cada urna) y grafique extracción a extracción $\mathbb{P}(A)$ y $\mathbb{P}(B)$,$P(A \cap B)$ y $P(A) \times P(B)$. Concluya si se evidencia que son independientes ($P(A \cap B) =\mathbb{P}(A)\mathbb{P}(B)$) .
+
+Hecho lo anterior, considere un segundo experimento, en el cual solamente se extraiga bolas de la **Urna1** y se definen los siguientes eventos:
+
+-   Evento A: que la bola extraída es un número par.
+
+-   Evento B: que la bola extraída es menor o igual a 3.
+
+Repita los pasos anteriores para estos nuevos Eventos. ¿Se observa independencia en este experimento?.
+
+**Respuesta:**
+
+```{r}
+# Primer grupo de eventos
+set.seed(27122021)  
+N_lan <- 1000  # Número de lanzamientos
+
+# 1. Probabilidades teoricas
+
+# bolas numeradas del 1 al 8
+bolas <- 1:8
+
+# Evento A: que la bola extraída de la **Urna1** sea un número par.
+L_A = c(2, 4, 6, 8) # Lanzamientos favorables A = c(2, 4, 6, 8)
+P_A_teorica <- length(L_A) / length(bolas)
+
+# Evento B: que la bola extraída de la **Urna2** sea un número menor o igual a 5.
+L_B = c(1, 2, 3, 4, 5) # Lanzamientos favorables B = c(1, 2, 3, 4, 5)
+P_B_teorica <- length(L_B) / length(bolas)
+
+# Evento A inter B: Urna1 par Y Urna2 <= 5
+# Extracciones independientes => P(A inter B) = P(A) * P(B)
+P_AB_teorica <- P_A_teorica * P_B_teorica
+
+cat("Probabilidades teoricas:\n")
+cat("P(A) = P(Urna1 par) =", P_A_teorica, "\n")
+cat("P(B) = P(Urna2 <= 5) =", P_B_teorica, "\n")
+cat("P(A inter B) = P(A) * P(B) =", P_AB_teorica, "\n")
+cat("P(A) * P(B) =", P_A_teorica * P_B_teorica, "\n\n")
+
+# 2. Simulación
+
+# Extracciones aleatorias
+urna1_extracciones <- sample(1:8, N_lan, replace = TRUE)
+urna2_extracciones <- sample(1:8, N_lan, replace = TRUE)
+
+# Eventos
+evento_A <- urna1_extracciones %% 2 == 0  # n par
+evento_B <- urna2_extracciones <= 5       # n <= 5
+evento_AB <- evento_A & evento_B          # se cumplen ambos
+
+# Probabilidades acumuladas
+P_A_sim <- cumsum(evento_A) / (1:N_lan)
+P_B_sim <- cumsum(evento_B) / (1:N_lan)
+P_AB_sim <- cumsum(evento_AB) / (1:N_lan)
+P_A_x_P_B_sim <- P_A_sim * P_B_sim
+
+# 3. Graficos
+par(mfrow = c(2, 2), mar = c(4, 4, 3, 2))
+
+# a. P(A)
+plot(1:N_lan, P_A_sim, type = "l", col = "blue", lwd = 2,
+     main = "Convergencia de P(A)", 
+     xlab = "Número de extracciones", ylab = "P(A)",
+     ylim = c(0, 1))
+abline(h = P_A_teorica, col = "red", lwd = 2, lty = 2)
+legend("topright", c("P(A) simulada", "P(A) teórica"), 
+       col = c("blue", "red"), lwd = 2, lty = c(1, 2))
+
+# b. P(B)
+plot(1:N_lan, P_B_sim, type = "l", col = "green", lwd = 2,
+     main = "Convergencia de P(B)", 
+     xlab = "Número de extracciones", ylab = "P(B)",
+     ylim = c(0, 1))
+abline(h = P_B_teorica, col = "red", lwd = 2, lty = 2)
+legend("topright", c("P(B) simulada", "P(B) teórica"), 
+       col = c("green", "red"), lwd = 2, lty = c(1, 2))
+
+# c. P(A inter B) 
+ plot(1:N_lan, P_AB_sim, type = "l", col = "purple", lwd = 2,
+      main = "Convergencia de P(A∩B)", 
+      xlab = "Número de extracciones", ylab = "P(A∩B)",
+      ylim = c(0, max(P_AB_sim) * 1.1))
+ abline(h = P_AB_teorica, col = "red", lwd = 2, lty = 2)
+ legend("topright", c("P(A∩B) simulada", "P(A∩B) teórica"), 
+        col = c("purple", "red"), lwd = 2, lty = c(1, 2))
+
+# d. P(A) * P(B)
+plot(1:N_lan, P_A_x_P_B_sim, type = "l", col = "darkred", lwd = 2,
+     main = "Convergencia de P(A)×P(B)", 
+     xlab = "Número de extracciones", ylab = "P(A)×P(B)")
+ abline(h = P_A_teorica * P_B_teorica, col = "red", lwd = 2, lty = 2)
+ legend("topright", c("P(A)×P(B) simulada", "P(A)×P(B) teórica"), 
+        col = c("purple", "red"), lwd = 2, lty = c(1, 2))
+
+# e. Comparación entre P(A)X(B) y P(A inter B)
+plot(1:N_lan, P_AB_sim, type = "l", col = "purple", lwd = 2,
+     main = "Comparación de P(A∩B) vs P(A)×P(B)", 
+     xlab = "Número de extracciones", ylab = "Probabilidad",
+     ylim = c(0, max(P_AB_sim, P_A_x_P_B_sim) * 1.1))
+lines(1:N_lan, P_A_x_P_B_sim, col = "orange", lwd = 2)
+legend("topright", c("P(A∩B) simulada", "P(A)×P(B) simulada"), 
+       col = c("purple", "orange", "red"), lwd = 2, lty = c(1, 1, 2))
+
+# f. Diferencia entre P(X)XP(B) y P(A inter B)
+diferencia <- abs(P_AB_sim - P_A_x_P_B_sim)
+plot(1:N_lan, diferencia, type = "l", col = "darkred", lwd = 2,
+     main = "Diferencia |P(A∩B) - P(A)×P(B)|", 
+     xlab = "Número de extracciones", ylab = "Diferencia")
+abline(h = 0, col = "black", lty = 2)
+
+# 3. Resultados para el último lanzamiento
+cat("Probabilidades simuladas", "\n")
+cat("P(A) simulada =", round(P_A_sim[N_lan], 4), "\n")
+cat("P(B) simulada =", round(P_B_sim[N_lan], 4), "\n")
+cat("P(A inter B) simulada =", round(P_AB_sim[N_lan], 4), "\n")
+cat("P(A) * P(B) simulada =", round(P_A_x_P_B_sim[N_lan], 4), "\n")
+```
+
+
+Para que dos eventos A y B sean independiente se debe cumplir que $P(A \cap B)=\mathbb{P}(A)\mathbb{P}(B)$. En particular, como trabajamos con números aleatorios, si $P(A \cap B)$ y $\mathbb{P}(A)\mathbb{P}(B)$ convergen al mismo valor, entonces se considera independiente. A partir del gráfico de la convergencia de la diferencia (último) se observa como esta tiende a 0, manteniendose muy por debajo de 0.05, y permitiendonos concluir que se cumple la independencia entre ambos eventos.
+
+
+```{r}
+# Segundo grupo de eventos
+set.seed(27122021)  
+N_lan <- 1000  # Número de lanzamientos
+
+# 1. Probabilidades teoricas
+
+# bolas numeradas del 1 al 8
+bolas <- 1:8
+
+# Evento A: que la bola extraída sea un número par.
+L_A = c(2, 4, 6, 8) # Lanzamientos favorables A = c(2, 4, 6, 8)
+P_A_teorica <- length(L_A) / length(bolas)
+
+# Evento B: que la bola extraida sea un número menor o igual a 3.
+L_B = c(1, 2, 3) # Lanzamientos favorables B = c(1, 2, 3)
+P_B_teorica <- length(L_B) / length(bolas)
+
+# Evento A inter B: Numero de la bola es par y <= 3
+L_AB <- intersect(L_A, L_B)
+P_AB_teorica <- length(L_AB)/length(bolas)
+
+cat("Probabilidades teoricas:\n")
+cat("P(A) = P(bola par) =", P_A_teorica, "\n")
+cat("P(B) = P(bola <= 3) =", P_B_teorica, "\n")
+cat("P(A inter B)", P_AB_teorica, "\n")
+cat("P(A) * P(B) =", P_A_teorica * P_B_teorica, "\n\n")
+
+# 2. Simulación
+
+# Extracciones aleatorias
+urna1_extracciones <- sample(1:8, N_lan, replace = TRUE)
+
+# Eventos
+evento_A <- urna1_extracciones %% 2 == 0  # La bola es par
+evento_B <- urna1_extracciones <= 3       # La misma bola es <= 3
+evento_AB <- evento_A & evento_B          # La misma bola cumple ambas
+
+
+# Probabilidades acumuladas
+P_A_sim <- cumsum(evento_A) / (1:N_lan)
+P_B_sim <- cumsum(evento_B) / (1:N_lan)
+P_AB_sim <- cumsum(evento_AB) / (1:N_lan)
+P_A_x_P_B_sim <- P_A_sim * P_B_sim
+
+# 3. Graficos
+par(mfrow = c(2, 2), mar = c(4, 4, 3, 2))
+
+# a. P(A)
+plot(1:N_lan, P_A_sim, type = "l", col = "blue", lwd = 2,
+     main = "Convergencia de P(A)", 
+     xlab = "Número de extracciones", ylab = "P(A)",
+     ylim = c(0, 1))
+abline(h = P_A_teorica, col = "red", lwd = 2, lty = 2)
+legend("topright", c("P(A) simulada", "P(A) teórica"), 
+       col = c("blue", "red"), lwd = 2, lty = c(1, 2))
+
+# b. P(B)
+plot(1:N_lan, P_B_sim, type = "l", col = "green", lwd = 2,
+     main = "Convergencia de P(B)", 
+     xlab = "Número de extracciones", ylab = "P(B)",
+     ylim = c(0, 1))
+abline(h = P_B_teorica, col = "red", lwd = 2, lty = 2)
+legend("topright", c("P(B) simulada", "P(B) teórica"), 
+       col = c("green", "red"), lwd = 2, lty = c(1, 2))
+
+# c. P(A inter B) 
+ plot(1:N_lan, P_AB_sim, type = "l", col = "purple", lwd = 2,
+      main = "Convergencia de P(A∩B)", 
+      xlab = "Número de extracciones", ylab = "P(A∩B)",
+      ylim = c(0, max(P_AB_sim) * 1.1))
+ abline(h = P_AB_teorica, col = "red", lwd = 2, lty = 2)
+ legend("topright", c("P(A∩B) simulada", "P(A∩B) teórica"), 
+        col = c("purple", "red"), lwd = 2, lty = c(1, 2))
+
+# d. P(A) * P(B)
+plot(1:N_lan, P_A_x_P_B_sim, type = "l", col = "darkred", lwd = 2,
+     main = "Convergencia de P(A)×P(B)", 
+     xlab = "Número de extracciones", ylab = "P(A)×P(B)")
+ abline(h = P_A_teorica * P_B_teorica, col = "red", lwd = 2, lty = 2)
+ legend("topright", c("P(A)×P(B) simulada", "P(A)×P(B) teórica"), 
+        col = c("purple", "red"), lwd = 2, lty = c(1, 2))
+
+# e. Comparación entre P(A)X(B) y P(A inter B)
+plot(1:N_lan, P_AB_sim, type = "l", col = "purple", lwd = 2,
+     main = "Comparación de P(A∩B) vs P(A)×P(B)", 
+     xlab = "Número de extracciones", ylab = "Probabilidad",
+     ylim = c(0, max(P_AB_sim, P_A_x_P_B_sim) * 1.1))
+lines(1:N_lan, P_A_x_P_B_sim, col = "orange", lwd = 2)
+legend("topright", c("P(A∩B) simulada", "P(A)×P(B) simulada"), 
+       col = c("purple", "orange", "red"), lwd = 2, lty = c(1, 1, 2))
+
+# f. Diferencia entre P(X)XP(B) y P(A inter B)
+diferencia <- abs(P_AB_sim - P_A_x_P_B_sim)
+plot(1:N_lan, diferencia, type = "l", col = "darkred", lwd = 2,
+     main = "Diferencia |P(A∩B) - P(A)×P(B)|", 
+     xlab = "Número de extracciones", ylab = "Diferencia")
+abline(h = 0, col = "black", lty = 2)
+
+# g. Resultados para el último lanzamiento
+cat("Probabilidades simuladas", "\n")
+cat("P(A) simulada =", round(P_A_sim[N_lan], 4), "\n")
+cat("P(B) simulada =", round(P_B_sim[N_lan], 4), "\n")
+cat("P(A inter B) simulada =", round(P_AB_sim[N_lan], 4), "\n")
+cat("P(A) * P(B) simulada =", round(P_A_x_P_B_sim[N_lan], 4), "\n")
+```
+
+
+Para que dos eventos A y B sean independiente se debe cumplir que $P(A \cap B)=\mathbb{P}(A)\mathbb{P}(B)$. En particular, como trabajamos con números aleatorios, si $P(A \cap B)$ y $\mathbb{P}(A)\mathbb{P}(B)$ convergen al mismo valor, entonces se considera independiente. A partir del gráfico de la convergencia de la diferencia (último) se observa como esta no tiende a 0, manteniendose por sobre de 0.05, además que en el gráfico de comparación entre $P(A \cap B)$) y $\mathbb{P}(A)\mathbb{P}(B)$ vemos como ambas probabilidades tienen una clara diferencia. Esto nos permite concluir que se no cumple la independencia entre ambos eventos. Es decir, A y B son dependientes.
+
+------------------------------------------------------------------------
+
+## Pregunta 5: Ruleta con estrategia de Martingala
+
+La **estrategia de Martingala** es una famosa táctica de apuestas que se originó en Francia en el siglo XVIII y fue tradicionalmente utilizada en juegos de azar como la ruleta. La idea básica es sencilla: el jugador apuesta siempre a un evento con **probabilidad cercana a 0.5**, por ejemplo, apostar a rojo o negro en la ruleta. Cada vez que pierde, **dobla la apuesta** en la siguiente ronda. Cuando gana, recupera todas las pérdidas anteriores más una ganancia igual a la apuesta inicial, y entonces vuelve a apostar la cantidad inicial.
+
+Un amigo le propone utilizar esta estrategia comenzando con un capital inicial de 200 dólares y una apuesta inicial fija, por ejemplo, de 5 dólares. En cada ronda, el jugador apuesta a un evento con probabilidad de ganar $p=\frac{18}{37} \approx 0.486$(la probabilidad de que salga rojo o negro en una ruleta europea). Si pierde la apuesta, en la siguiente ronda debe doblar el monto apostado; si gana, recupera todas las pérdidas acumuladas más la ganancia correspondiente a la apuesta inicial y vuelve a apostar la cantidad inicial. Además, si en algún momento el jugador no cuenta con fondos suficientes para cubrir la apuesta requerida, deberá apostar todo el dinero disponible en esa ronda. El jugador pierde cuando se queda sin fondos, y el juego termina cuando esto ocurre o cuando alcanza un capital objetivo de 300 dólares. Cabe destacar que al ganar una apuesta, el jugador recibe el doble del monto apostado. Por ejemplo, si tiene 200 dólares, apuesta 5 y gana, entonces su nuevo capital será 205 dólares.
+
+En la primera parte del experimento, se debe simular y graficar la evolución del capital de 5 partidas bajo esta estrategia, observando las diferentes trayectorias posibles. Además, se debe calcular la probabilidad empírica de que el jugador alcance el capital objetivo de 300 dólares antes de quedarse sin fondos simulando 1000 partidas de esta estrategia.
+
+Para la segunda parte del experimento, se comparará la estrategia de Martingala con una estrategia más simple donde el jugador apuesta constantemente 5 dólares en cada ronda, independientemente de ganar o perder, manteniendo la misma probabilidad de éxito $p=\frac{18}{37}$. En esta segunda estrategia, las condiciones de finalización del juego son las mismas: termina cuando el jugador se queda sin fondos o alcanza el capital objetivo. También se deben simular 5 partidas, graficar la evolución del capital y luego, simulando 1000 partidas (sin graficar estas) calcular la probabilidad de éxito bajo esta estrategia fija para compararla con la de Martingala.
+
+*Hint: Para calcular realizar el cálculo de la probabilidad de éxito, en cada experimento, únicamente es necesario revisar el último valor del vector vec_fondos*
+
+**Respuesta**
+
+```{r}
+# Función para obtener el desarrollo de las apuestas mediante Martingala
+# Args:
+#   fondos: Cantidad de dinero disponible
+#   apuesta_inicial: monto inicial a apostar
+
+Martingala <- function(fondos = 200, apuesta_inicial = 5){
+  vector_fondos <- fondos # Evolución de los fondos
+  apuesta_actual <- apuesta_inicial # Al inicio
+  p <- 18/37 # Probabilidad de ganar fija
+  
+  # Mientras hayan fondos, o se llegue a la meta de 300 dls
+  while (0<fondos && fondos<300) {
+    # Si mi supuesta actual supera mis fondos, apuesto todo
+    if (apuesta_actual > fondos){
+      apuesta_actual <- fondos
+    }
+    
+    # Ganar la apuesta
+    if (runif(1)<=p){ # numero aleatorio entre 0 y 1 => p(ganar) = 18/37
+      # Ganancia
+      fondos <- fondos + apuesta_actual
+      # Volver a apostar la cantidad inicial
+      apuesta_actual <- apuesta_inicial
+    } else { # Perder la apuesta
+      fondos <- fondos - apuesta_actual
+      # Doblar la apuesta actual
+      apuesta_actual <- apuesta_actual * 2
+    }
+    
+    vector_fondos <- c(vector_fondos, fondos)
+  }
+  return(vector_fondos) # Devuelve un vector con el desarrollo de los fondos
+}
+
+```
+
+
+```{r}
+# Simulacion de 5 partidas
+set.seed(27122021)
+
+# Almacernar resultados
+partidas_martingala <- list()
+
+for (i in 1:5) {
+  partidas_martingala[[i]] <- Martingala()
+}
+
+# Grafico
+par(mfrow = c(1, 1), mar = c(4, 4, 3, 1))
+plot(0, 0, type = "n", xlim = c(0, max(sapply(partidas_martingala, length))), 
+     ylim = c(0, 320), xlab = "Número de rondas", ylab = "Capital dls",
+     main = "Evolución del capital mediante Martingala")
+
+colores <- c("red", "blue", "green", "orange", "purple")
+for (i in 1:5) {
+  lines(0:(length(partidas_martingala[[i]])-1), partidas_martingala[[i]], col = colores[i], lwd = 2)
+}
+
+# Lineas de referencia
+abline(h = 200, col = "gray", lty = 2, lwd = 1)  # fondo inicial
+abline(h = 300, col = "gray", lty = 2, lwd = 1)  # fondo objetivo
+abline(h = 0, col = "gray", lty = 2, lwd = 1)    # Sin fondos
+
+legend("topright", legend = paste("Partida", 1:5), col = colores, lwd = 2, cex = 0.8)
+
+
+for (i in 1:5) {
+  capital_final <- tail(partidas_martingala[[i]], 1)
+  resultado <- ifelse(capital_final >= 300, "Ganó", "Perdió")
+  cat(sprintf("Partida %d: Capital final = $%d, Rondas = %d, %s\n", i, capital_final, length(partidas_martingala[[i]])-1, resultado))
+}
+```
+
+
+```{r}
+# Probabilidad empirica vía simulación de 1.000 partidas
+set.seed(27122021)
+
+# Cantidad de partidas ganadas
+ganadas_martingala <- 0
+
+for (i in 1:1000) {
+  # La simulación de la partida devuelve un vector cuya ultima posición son los fondos finales
+  resultado <- Martingala()
+  if (tail(resultado, 1) >= 300) {
+    ganadas_martingala <- ganadas_martingala + 1
+  }
+}
+
+prob_ganar_martingala <- ganadas_martingala / 1000
+cat(sprintf("\nProbabilidad de ganar usando Martingala: %.3f\n", prob_ganar_martingala))
+```          
+            
+
+```{r}
+# Función para obtener el desarrollo de las apuestas mediante el metodo tradicional
+# Args:
+#   fondos: Cantidad de dinero disponible
+#   apuesta_inicial: monto inicial a apostar
+
+ApuestaTradicional <- function(fondos = 200, apuesta = 5){
+  vector_fondos <- fondos  # Evolucion de los fondos
+  p <- 18/37 # Probabilidad de ganar fija
+  while (fondos > 0 & fondos < 300) {
+    # Ganar
+    if (runif(1) <= p) {
+      fondos <- fondos + apuesta
+    } else {  # Perder
+      fondos <- fondos - apuesta  
+    }
+    
+    vector_fondos <- c(vector_fondos, fondos)
+  }
+  
+  
+  return(vector_fondos)
+}
+```
+
+```{r}
+# Grafico de 5 partidas
+set.seed(27122021)
+
+# Lista de resultados
+partidas_tradicional <- list()
+
+for (i in 1:5) {
+  partidas_tradicional[[i]] <- ApuestaTradicional()
+}
+
+# Grafico
+plot(0, 0, type = "n", xlim = c(0, max(sapply(partidas_tradicional, length))), 
+     ylim = c(0, 320), xlab = "Número de rondas", ylab = "Capital ($)",
+     main = "Evolución del capital usando la estrategia Tradicional")
+
+for (i in 1:5) {
+  lines(0:(length(partidas_tradicional[[i]])-1), partidas_tradicional[[i]], col = colores[i], lwd = 2)
+}
+
+# Lineas de referencia
+abline(h = 200, col = "gray", lty = 2, lwd = 1)  # fondo inicial
+abline(h = 300, col = "gray", lty = 2, lwd = 1)  # fondo objetivo
+abline(h = 0, col = "gray", lty = 2, lwd = 1)    # Sin fondos
+
+legend("topright", legend = paste("Partida", 1:5), col = colores, lwd = 2, cex = 0.8)
+
+# Resultados
+cat("\nResultados de las 5 partidas tradicionales:\n")
+for (i in 1:5) {
+  capital_final <- tail(partidas_tradicional[[i]], 1)
+  resultado <- ifelse(capital_final >= 300, "Ganó", "Perdió")
+  cat(sprintf("Partida %d: Capital final = $%d, Rondas = %d, %s\n", i, capital_final, length(partidas_tradicional[[i]])-1, resultado))
+}
+
+```
+
+```{r}
+# 1000 partidas
+set.seed(27122021)
+
+# Partidas ganadas mediante el metodo tradicional
+ganadas_tradicional <- 0
+
+# Simulaciones
+for (i in 1:1000) {
+  resultado <- ApuestaTradicional()
+  if (tail(resultado, 1) >= 300) {
+    ganadas_tradicional <- ganadas_tradicional + 1
+  }
+}
+
+prob_ganadas_tradicional <- ganadas_tradicional / 1000
+cat(sprintf("\nProbabilidad de ganar mediante la estrategia tradicional: %.3f\n", prob_ganadas_tradicional))
+```
+
+En base a ambas simulaciones de 5 partidas, se puede ver que mediante el método tradicional se perdieron todas, y además fueron necesarias notoriamente muchas más rondas para terminar el juego (la máxima cantidad fueron 1540), mientras que por Martingala la máxima cantidad fueron 111 iteraciones en una partida, y con 2 de 5 partidas ganadas.
+
+En base a la simulación empirica mediante 1000 partidas se obtuvo que Martingala tiene una probabilidad de conseguir el objetivo de 0.631, mientras que el método tradicional tiene una de 0.325. Es decir, el método de Martingala es más exitoso que el metodo tradicional.
+
+ 
+
+<hr />
+
+<p style="text-align: center;">
+
+A work by <a href="https://github.com/dccuchile/CC6104">CC6104</a>
+
+</p>
+
+<!-- Add icon library -->
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.1/css/all.css">
+
+<!-- Add font awesome icons -->
+
+<p style="text-align: center;">
+
+<a href="https://github.com/dccuchile/CC6104"><i class="fab fa-github" style='font-size:30px'></i></a>
+
+</p>
+
+ 

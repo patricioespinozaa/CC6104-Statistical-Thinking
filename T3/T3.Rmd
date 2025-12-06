@@ -1,0 +1,1084 @@
+---
+title: "Tarea 3"
+output:
+  html_document:
+    df_print: paged
+---
+
+![](banner.png)
+
+<center>
+
+<h1>Tarea 3: Frequentist Inference II</h1>
+
+</center>
+
+<center><strong>CC6104: Statistical Thinking</strong></center>
+
+#### **Integrantes :**
+
+-   Alumno 1: Patricio Espinoza A.
+
+#### **Cuerpo Docente:**
+
+-   Profesor: Felipe Bravo M.
+-   Auxiliar: Matías Godoy
+-   Ayudantes: Scarleth Betancurt, Máximo Flores y Laura Maldonado
+
+#### **Fecha límite de entrega:**
+
+### **Índice:**
+
+1.  [Objetivo](#id1)
+2.  [Instrucciones](#id2)
+3.  [Referencias](#id3)
+4.  [Elaboración de Código](#id5)
+
+### **Objetivo**<a name="id1"></a>
+
+[Bienvenid\@s](mailto:Bienvenid@s){.email} a la tercera tarea del curso Statistical Thinking. Esta tarea tiene como objetivo evaluar los contenidos teóricos de la segunda parte del curso, los cuales se enfocan principalmente en el diseño de experimentos, test de hipótesis y regresión lineal. Si aún no han visto las clases, se recomienda visitar los enlaces de las referencias.
+
+La tarea consta de una parte teórica que busca evaluar conceptos vistos en clases. Seguido por una parte práctica con el fin de introducirlos a la programación en R enfocada en el análisis estadístico de datos.
+
+### **Instrucciones:**<a name="id2"></a>
+
+-   La tarea se realiza en grupos de **máximo 2 personas**. Pero no existe problema si usted desea hacer de forma individual.
+-   La entrega es a través de u-cursos a más tardar el día estipulado en la misma plataforma. A las tareas atrasadas se les descontará un punto por día.
+-   El formato de entrega es este mismo **Rmarkdown** y un **html** con la tarea desarrollada. Por favor compruebe que todas las celdas han sido ejecutadas en el archivo html.
+-   Al momento de la revisión tu código será ejecutado. Por favor verifica que tu entrega no tenga errores de compilación.
+-   No serán revisadas tareas desarrolladas en Python.
+-   Está **PROHIBIDO** la copia o compartir las respuestas entre integrantes de diferentes grupos.
+-   Pueden realizar consultas de la tarea a través de U-cursos y/o del canal de Discord del curso.
+
+### **Referencias:**<a name="id3"></a>
+
+Slides de las clases:
+
+-   [Design of Experiments & Hypothesis Testing](https://github.com/dccuchile/CC6104/blob/master/slides/ST-hypothesis.pdf)
+-   [Linear Regression](https://github.com/dccuchile/CC6104/blob/master/slides/ST-regression.pdf)
+
+Enlaces a videos de las clases:
+
+-   Design of Experiments & Hypothesis Testing: [video1](https://youtu.be/3MueyHnNNig) [video2](https://youtu.be/JuyIrya23E0) [video3](https://youtu.be/OXTyG6DIvK4) [video4](https://youtu.be/95QeSwrNoLI) [video5](https://youtu.be/ZCr3WCdc-54) [video6](https://youtu.be/T6ZR0KoKhBQ)
+-   Introduction to Statistical Inference: [video1](https://youtu.be/ZLZXJPKH6tU) [video2](https://youtu.be/mW7bHkJBcB4) [video3](https://youtu.be/SHa5Neb7bfg) [video4](https://youtu.be/rCD_jofxecY) [video5](https://youtu.be/ir4P_f3s44g) [video6](https://youtu.be/wfNhJWHPOi8)
+
+------------------------------------------------------------------------
+
+# Elaboración de Código<a name="id5"></a>
+
+En la siguiente sección deberá resolver cada uno de los experimentos computacionales a través de la programación en R. Para esto se le aconseja que cree funciones en R, ya que le facilitará la ejecución de gran parte de lo solicitado.
+
+Para el desarrollo preste mucha atención en los enunciados, ya que se le solicitará la implementación de métodos sin uso de funciones predefinidas. Por otro lado, Las librerías permitidas para desarrollar de la tarea 3 son las siguientes:
+
+```{r}
+# Manipulación de estructuras
+library(tidyverse)
+library(dplyr)
+library(tidyr)
+
+# Para realizar plots
+library(scatterplot3d)
+library(ggplot2)
+library(plotly)
+
+# Manipulación de varios plots en una imagen.
+library(gridExtra)
+```
+
+### Pregunta 1: “El efecto fantasma” — Significancia estadística sin relevancia práctica
+
+El Ministerio de Salud publica un informe afirmando que, tras una campaña de alimentación saludable, el consumo promedio de azúcar en adultos disminuyó de **90 g/día** a **89.9 g/día**.\
+A primera vista, la diferencia parece insignificante, pero ¿podría resultar “estadísticamente significativa” con un número suficientemente grande de observaciones?
+
+**Instrucciones:**
+
+1.  Simule datos de consumo de azúcar bajo las siguientes condiciones:
+
+-   Grupo A (antes de la campaña): $\mu_A = 90$, $\sigma_A = 10$
+-   Grupo B (después de la campaña): $\mu_B = 89.9$, $\sigma_B = 10$
+-   Tamaños muestrales: $n \in \{10, 100, 10\,000, 50\,000, 100\,000, 500\,000\}$
+
+2.  Para cada $n$, ejecute un test t de dos muestras bilateral (`t.test(..., var.equal = TRUE)`).
+
+3.  Presente una tabla con las columnas: *n*, *t statistic*, *df*, *p-value*, *decisión (α = 0.05)*.
+
+4.  Genere un gráfico del valor p en función del tamaño muestral (escala logarítmica en el eje y) e incluya una línea horizontal en α = 0.05.
+
+5.  Reflexione y concluya:
+
+-   ¿Qué ocurre con el valor p al aumentar n y por qué?
+-   ¿Se puede afirmar que la campaña tiene un efecto “real” o “prácticamente relevante”?
+
+**Respuesta**
+
+```{r}
+
+set.seed(17)
+
+# Parámetros
+mu_A <- 90
+mu_B <- 89.9
+sigma <- 10
+n_values <- c(10, 100, 10000, 50000, 100000, 500000)
+alpha <- 0.05
+
+resultados <- data.frame(
+  n = integer(),
+  t_statistic = numeric(),
+  df = integer(),
+  p_value = numeric(),
+  decision = character(),
+  stringsAsFactors = FALSE
+)
+
+# Función para realizar el test t para cada tamaño muestral
+for (n in n_values) {
+  # Simulación de los datos del Grupo A - pre campaña
+  grupo_A <- rnorm(n, mean = mu_A, sd = sigma)
+  
+  # Simulación de los datos del Grupo B - post campaña 
+  grupo_B <- rnorm(n, mean = mu_B, sd = sigma)
+  
+  # test t bilateral con varianzas iguales
+  test_resultado <- t.test(grupo_A, grupo_B, var.equal = TRUE)
+  
+  # Decisión basada en alpha
+  decision <- ifelse(test_resultado$p.value < alpha, 
+                     "Rechazar", 
+                     "No rechazar")
+  
+  # añadir los resultados a la tabla
+  resultados <- rbind(resultados, data.frame(
+    n = n,
+    t_statistic = round(test_resultado$statistic, 4),
+    df = test_resultado$parameter,
+    p_value = test_resultado$p.value,
+    decision = decision
+  ))
+}
+
+# Tabla de resultados
+print(resultados)
+
+# Gráfico del p-value vs tamaño muestral
+grafico_pvalue <- ggplot(resultados, aes(x = n, y = p_value)) +
+  geom_point(size = 3, color = "steelblue") +
+  geom_line(color = "steelblue", linewidth = 1) +
+  geom_hline(yintercept = alpha, 
+             color = "red", 
+             linetype = "dashed", 
+             linewidth = 1) +
+  annotate("text", 
+           x = max(n_values) * 0.5, 
+           y = alpha * 1.5, 
+           label = paste("α =", alpha), 
+           color = "red", 
+           size = 4) +
+  scale_x_continuous(trans = "log10", 
+                     breaks = n_values,
+                     labels = scales::comma) +
+  scale_y_continuous(trans = "log10") +
+  labs(
+    title = "Valor p en función del tamaño muestral - Escala log",
+    x = "Tamaño muestral (n)",
+    y = "Valor p"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(face = "bold", size = 14),
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  )
+
+print(grafico_pvalue)
+```
+
+
+
+
+
+
+
+
+Respuestas:
+Al aumentar el valor de n podemos ver que el p-value tiende a incrementar hasta n=10.000, sin embargo, posterior a dicho valores comienza a decrecer considerablemente. Llegando a un p<$\alpha=0.05$. Esto significa que hay evidencia estadística de una diferencia (no azarosa) entre los grupos A y B. El p-value decrece ya que con muestras muy grandes el promedio se estabiliza y el ruido aleatorio de la muestra se cancela (Ley de los grandes números). Matematicamente:
+
+$t=\frac{\bar{X}_A-\bar{X}_B}{\sqrt{\frac{s^2}{n_A} + \frac{s^2}{n_B}}}$
+
+Cuando $n$ aumenta, $t$ aumenta en magnitud. Y un $t$ más grande resulta en un p-value más pequeño.
+
+En base a los resultados del p value podriamos decir que el test estadistico muestra significancias con muestras grandes. Sin embargo, debido a que la diferencia es de solo 0.1g/día entre pre y post campaña (diferencia porcentual del 0.11) podemos decir que la campaña no tuvo un efecto relevante. Esto coincide con el ejemplo del 'efecto fanstasma' donde a partir de una significancia estadistica se confunde la revelancia práctica real.
+
+------------------------------------------------------------------------
+
+### Pregunta 2: Comparación de dietas y análisis de potencia del test
+
+Un nutricionista desea evaluar la efectividad de una dieta baja en carbohidratos sobre el peso corporal.\
+Para ello, mide el peso (en kg) de un grupo de pacientes antes y después de 8 semanas siguiendo la dieta.\
+Se espera una reducción promedio de 2 kg, pero el efecto puede verse afectado por la variabilidad individual y el tamaño del grupo.
+
+Recordemos que la potencia de un test se define como:
+
+$$
+Power = 1 - \beta
+$$
+
+donde $\beta$ representa la probabilidad de cometer un error tipo II, es decir, no rechazar la hipótesis nula cuando esta es falsa.\
+Por lo tanto, la potencia indica la probabilidad de detectar un efecto real cuando este efectivamente existe.
+
+------------------------------------------------------------------------
+
+**Instrucciones:**
+
+1.  Genere datos emparejados de pesos antes y después bajo las siguientes condiciones:
+
+    -   Peso inicial: $W_{antes,i} \sim \mathcal{N}(80, 5^2)$
+    -   Pérdida de peso (cambio individual): $\Delta_i \sim \mathcal{N}(\mu_D, \sigma_D^2)$\
+        donde $\mu_D = 2$ representa la pérdida promedio esperada.
+    -   Peso final: $W_{después,i} = W_{antes,i} - \Delta_i$
+    -   Considere tres niveles de desviación estándar: $\sigma_D \in \{1, 2, 3\}$\
+        y cuatro tamaños muestrales: $n \in \{10, 20, 40, 80\}$
+
+2.  Para cada combinación de $(n, \sigma_D)$, simule 1000 experimentos independientes y calcule la proporción de veces que el test t pareado rechaza $H_0: \mu_D = 0$ al nivel de significancia $\alpha = 0.05$.
+
+3.  Construya una grilla de resultados con las columnas: *n*, *σ*, *potencia estimada*.
+
+4.  Genere un gráfico de líneas donde el eje x sea n, el eje y sea potencia, y cada línea corresponda a un valor distinto de $\sigma$\
+    Use colores diferentes para cada $\sigma$ y agregue una línea horizontal en potencia = 0.8.
+
+5.  Analice y concluya:
+
+    -   ¿Cómo varía la potencia al aumentar *n* y al disminuir $\sigma$?
+    -   ¿Qué tamaño de muestra sería necesario para alcanzar una potencia ≥ 0.8 con $\sigma= 2$?
+
+**Respuesta:**
+
+```{r}
+set.seed(17)
+
+n_values <- c(10, 20, 40, 80)
+sigma_values <- c(1, 2, 3)     # sigma_D
+mu_true <- 2                   # mu_D
+alpha <- 0.05
+
+n_simulaciones <- 1000
+peso_inicial_mean <- 80
+peso_inicial_sd <- 5
+
+
+
+# simular el experimento junto con el test t pareado
+simular_experimento <- function(n, sigma_D, mu_D) {
+  # Peso inicial
+  peso_antes <- rnorm(n, mean = peso_inicial_mean, sd = peso_inicial_sd)
+  
+  # Pérdida de peso (cambio individual)
+  delta <- rnorm(n, mean = mu_D, sd = sigma_D)
+  
+  # Pesos después
+  peso_despues <- peso_antes - delta
+  
+  # Test t pareado (bilateral)
+  # H0: mu_D = 0 (no hay cambio)
+  # Ha: mu_D ≠ 0 (hay cambio)
+  test_resultado <- t.test(peso_antes, peso_despues, paired = TRUE)
+  
+  # Retornar si se rechazó Ho: mu_D=0 con alpha =0.05
+  return(test_resultado$p.value < alpha)
+}
+
+
+
+
+# Resultados df
+resultados_potencia <- data.frame(
+  n = integer(),
+  sigma = numeric(),
+  potencia_estimada = numeric(),
+  stringsAsFactors = FALSE
+)
+
+
+
+
+# Simular cada combinación (n, sigma_D)
+for (n in n_values) {
+  for (sigma_D in sigma_values) {
+    # n_simulaciones independientes
+    rechazos <- replicate(n_simulaciones, simular_experimento(n, sigma_D, mu_true))
+    
+    # Proporción de rechazos
+    potencia <- mean(rechazos)
+    
+    # Añadir resultados al df
+    resultados_potencia <- rbind(resultados_potencia, data.frame(
+      n = n,
+      sigma = sigma_D,
+      potencia_estimada = potencia
+    ))
+  }
+}
+
+
+print(resultados_potencia)
+```
+
+```{r}
+# Convertir sigma a factor
+resultados_potencia$sigma_factor <- factor(
+  resultados_potencia$sigma,
+  levels = sigma_values,
+  labels = paste("σ =", sigma_values)
+)
+
+# Gráfico de potencia vs tamaño muestral
+grafico_potencia <- ggplot(resultados_potencia, 
+                           aes(x = n, y = potencia_estimada, 
+                               color = sigma_factor, group = sigma_factor)) +
+  geom_line(linewidth = 1.2) +
+  geom_point(size = 3) +
+  geom_hline(yintercept = 0.8, 
+             linetype = "dashed", 
+             color = "black", 
+             linewidth = 1) +
+  annotate("text", 
+           x = max(n_values) * 0.75, 
+           y = 0.84, 
+           label = "Potencia = 0.8", 
+           size = 4) +
+  scale_x_continuous(breaks = n_values) +
+  scale_y_continuous(limits = c(0, 1), breaks = seq(0, 1, 0.1)) +
+  scale_color_manual(values = c("σ = 1" = "#00BA38", 
+                                 "σ = 2" = "#619CFF", 
+                                 "σ = 3" = "#F8766D")) +
+  labs(
+    title = "Potencia del Test t pareado en función del tamaño muestral",
+    x = "Tamaño muestral (n)",
+    y = "Potencia estimada",
+    color = "Desviación\nestándar"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(face = "bold", size = 14),
+    legend.position = "right",
+    panel.grid.minor = element_blank()
+  )
+
+print(grafico_potencia)
+```
+
+
+
+
+
+Respuestas:
+Para cada $\sigma$ al aumentar $n$ la Potencia aumenta. Esto sucede ya que para un tamaño muestral más grande, es más fácil detectar el efecto real de los 2 kg de pérdida de peso.
+
+Al disminuir $\sigma$ la Potencia aumenta (Observar n=10 para $\sigma=1$, $\sigma=2$ y $\sigma=3$), es decir, son inversamente proporcionales, esto se debe a que ante menor desviación estándar, corroboramos mejor que efectivamente se pierden solo los 2 kg de peso. 
+
+De acuerdo al gráfico, para alcanzar una potencia $\geq 0.8$ con $\sigma = 2$ es necesario una muestra de un tamaño mínimo $n=20$.
+
+
+### Pregunta 3: Errores tipo I y II en datos reales — El caso de los pingüinos
+
+\
+Un grupo de biólogos de la Antártica estudia la longitud de las aletas de dos especies de pingüinos: **Adelie** y **Chinstrap**. Sospechan que los pingüinos *Chinstrap* tienen aletas más largas en promedio, pero desean evaluar la evidencia estadística de esa diferencia.
+
+Para ello, se utilizará el dataset público [`penguins.csv`](https://raw.githubusercontent.com/allisonhorst/palmerpenguins/main/inst/extdata/penguins.csv) del proyecto Palmer Penguins, el cual contiene observaciones biométricas de tres especies.
+
+**Instrucciones:**
+
+1.  Cargue y prepare los datos:
+
+    -   Descargue el archivo CSV directamente desde el enlace anterior.
+    -   Filtre solo las especies **Adelie** y **Chinstrap**.
+    -   Seleccione la columna `flipper_length_mm` (longitud de aleta) y elimine los valores `NA`.
+
+2.  Compare las medias entre especies mediante un test t de Welch, que corresponde a un test t para dos muestras independientes con varianzas posiblemente desiguales, para las siguientes hipótesis:\
+    $$
+    H_0: \mu_{Adelie} = \mu_{Chinstrap} \quad\text{vs}\quad H_1: \mu_{Adelie} \neq \mu_{Chinstrap}
+    $$ Reporte: estadístico t, grados de libertad, valor p, medias muestrales y decisión al nivel $\alpha = 0.05$.
+
+3.  Simule errores tipo I y potencia empírica:
+
+En esta sección se busca estimar empíricamente la frecuencia con que el test t de Welch rechaza la hipótesis nula, tanto en un escenario donde no existe una diferencia real (error tipo I), como en otro donde sí existe una diferencia verdadera entre especies (potencia del test).
+
+-   Error tipo I:\
+    Genere 1000 experimentos mediante barajado aleatorio de las etiquetas de especie, es decir, permute aleatoriamente la columna `species` sin modificar las longitudes de las aletas.\
+    De esta forma, se eliminan las diferencias reales entre grupos, simulando un escenario donde $H_0$ es cierta.\
+    Para cada experimento, aplique un test t de Welch y calcule la probabilidad de obtener un error de tipo I.
+
+-   Potencia:\
+    Genere otros 1000 experimentos independientes partiendo de los mismos datos, pero antes de aplicar el test:
+
+    1.  Vuelva a barajar las etiquetas de las especies
+    2.  Aumente artificialmente la longitud de las aletas de los pingüinos *Chinstrap* en +3 mm, simulando una diferencia real.
+    3.  Luego, calcule en cuántos de estos casos el test rechaza $H_0$ y reporte la potencia del test
+
+-   **Repita ambos procedimientos** para niveles de significancia $\alpha \in \{0.001 , 0.01, 0.05, 0.10\}$ y compare los resultados obtenidos.
+
+4.  Visualice y analice los resultados:
+
+    -   Grafique las tasas de error tipo I y la potencia estimada para cada nivel de significancia (usando `ggplot2`).
+    -   Incluya una tabla resumen con las columnas: *α*, *Tipo I*, *Potencia*.
+
+5.  Discuta y concluya:
+
+    -   ¿Qué relación observa entre el nivel α y la tasa de error tipo I estimada?
+    -   ¿Cambia la potencia al aumentar α? ¿Por qué?
+    -   Conecte sus conclusiones con las definiciones de **α, β y 1−β (potencia)** vistas en clases.
+
+**Respuesta Aquí:**
+
+```{r}
+set.seed(17)
+
+# 1. Cargar datos
+penguins <- read.csv("https://raw.githubusercontent.com/allisonhorst/palmerpenguins/main/inst/extdata/penguins.csv")
+
+# Filtrado de especies: Adelie y Chinstrap
+# Seleccionar la columna flipper_length_mm y eliminar NA
+penguins_filtrado <- penguins %>%
+  filter(species %in% c("Adelie", "Chinstrap")) %>%
+  select(species, flipper_length_mm) %>%
+  filter(!is.na(flipper_length_mm))
+```
+
+```{r}
+# 2. Comparar medias entre especies mediante un test t de Welch
+adelie_data <- penguins_filtrado %>%
+  filter(species == "Adelie") %>%
+  pull(flipper_length_mm)
+
+chinstrap_data <- penguins_filtrado %>%
+  filter(species == "Chinstrap") %>%
+  pull(flipper_length_mm)
+
+# Test t de Welch
+test_welch <- t.test(adelie_data, chinstrap_data, var.equal = FALSE)
+
+
+cat(sprintf("Media Adelie: %.2f mm\n", mean(adelie_data)))
+cat(sprintf("Media Chinstrap: %.2f mm\n", mean(chinstrap_data)))
+cat(sprintf("Estadístico t: %.4f\n", test_welch$statistic))
+cat(sprintf("Grados de libertad: %.2f\n", test_welch$parameter))
+cat(sprintf("Valor p: %.6f\n", test_welch$p.value))
+```
+Respuesta:
+En cuanto a los resultados obtenidos, tenemos que las medias muestrales son $\mu_{Adelie} = 189.95mm$ mientras que $\mu_{Chinstrap}=195.82mm$. Al realizar el test de Welch se obtuvo que el estadístico $t=-5.7804$, los grados de libertad son $119.68$ y el valor $p=0$. A un nivel de decisisión de $\alpha=0.05$ se obtiene por tanto que se rechaza $H_o: \mu_{Adelie}=\mu_{Chinstrap}$  puesto que hay una diferencia significativa. Mientras que $H_1: \mu_{Adelie} \neq \mu_{Chinstrap}$ se acepta.
+
+```{r}
+# 3. Simulación de errores tipo I y potencia empírica
+
+# parametros
+n_simulaciones <- 1000
+alpha_values <- c(0.001, 0.01, 0.05, 0.10)
+aumento_chinstrap <- 3 
+
+# simular errores de tipo I
+simular_error_tipo_I <- function(datos) {
+  # Barajar etiquetas de especies
+  datos_permutados <- datos
+  datos_permutados$species <- sample(datos_permutados$species)
+  
+  # Separar en grupos
+  grupo1 <- datos_permutados %>% 
+    filter(species == "Adelie") %>% 
+    pull(flipper_length_mm)
+  
+  grupo2 <- datos_permutados %>% 
+    filter(species == "Chinstrap") %>% 
+    pull(flipper_length_mm)
+  
+  # Test t de Welch
+  test_resultado <- t.test(grupo1, grupo2, var.equal = FALSE)
+  
+  return(test_resultado$p.value)
+}
+
+# simulación de potencia
+simular_potencia <- function(datos, aumento) {
+  # Barajar etiquetas de especies
+  datos_permutados <- datos
+  datos_permutados$species <- sample(datos_permutados$species)
+  
+  # Aumentar artificialmente las aletas de Chinstrap en +3mm
+  datos_permutados <- datos_permutados %>%
+    mutate(flipper_length_mm = ifelse(species == "Chinstrap", 
+                                       flipper_length_mm + aumento, 
+                                       flipper_length_mm))
+  
+  # Separar en grupos
+  grupo1 <- datos_permutados %>% 
+    filter(species == "Adelie") %>% 
+    pull(flipper_length_mm)
+  
+  grupo2 <- datos_permutados %>% 
+    filter(species == "Chinstrap") %>% 
+    pull(flipper_length_mm)
+  
+  # Test t de Welch
+  test_resultado <- t.test(grupo1, grupo2, var.equal = FALSE)
+  
+  return(test_resultado$p.value)
+}
+
+# tabla de resultados
+resultados_simulacion <- data.frame(
+  alpha = numeric(),
+  error_tipo_I = numeric(),
+  potencia = numeric(),
+  stringsAsFactors = FALSE
+)
+```
+
+
+```{r}
+# Realizar simulaciones para cada alpha
+for (alpha in alpha_values) {
+  # Simular Error Tipo I
+  p_values_tipo_I <- replicate(n_simulaciones, 
+                                simular_error_tipo_I(penguins_filtrado))
+  tasa_error_tipo_I <- mean(p_values_tipo_I < alpha)
+  
+  # Simular Potencia 
+  p_values_potencia <- replicate(n_simulaciones, 
+                                  simular_potencia(penguins_filtrado, 
+                                                   aumento_chinstrap))
+  potencia_estimada <- mean(p_values_potencia < alpha)
+  
+  # resultados
+  resultados_simulacion <- rbind(resultados_simulacion, data.frame(
+    alpha = alpha,
+    error_tipo_I = tasa_error_tipo_I,
+    potencia = potencia_estimada
+  ))
+}
+
+print(resultados_simulacion)
+```
+
+Respuesta:
+Al comparar los resultados obtenidos vemos que $\alpha$ tiene valores cercanos a los del error de tipo I. Asimismo, se puede ver que el error tipo I y la Potencia son directamente proporcionales al aumento de $\alpha$.
+
+
+```{r}
+print(resultados_simulacion)
+
+
+# 4. Visualización y análisis de resultados
+datos_grafico <- resultados_simulacion %>%
+  pivot_longer(cols = c(error_tipo_I, potencia),
+               names_to = "tipo",
+               values_to = "tasa")
+datos_grafico$tipo <- factor(datos_grafico$tipo,
+                              levels = c("error_tipo_I", "potencia"),
+                              labels = c("Error Tipo I", "Potencia"))
+# Gráfico 1: Líneas comparativas
+grafico_lineas <- ggplot(datos_grafico, 
+                         aes(x = alpha, y = tasa, color = tipo, group = tipo)) +
+  geom_line(linewidth = 1.2) +
+  geom_point(size = 3) +
+  scale_x_continuous(breaks = alpha_values) +
+  scale_y_continuous(limits = c(0, 1), breaks = seq(0, 1, 0.1)) +
+  scale_color_manual(values = c("Error Tipo I" = "#F8766D", 
+                                 "Potencia" = "#00BA38")) +
+  labs(
+    title = "Error Tipo I vs Potencia según nivel de significancia",
+    subtitle = sprintf("Basado en %d simulaciones | Aumento artificial: +%d mm", 
+                      n_simulaciones, aumento_chinstrap),
+    x = "Nivel de significancia (alpha)",
+    y = "Tasa estimada",
+    color = "Métrica"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(face = "bold", size = 14),
+    legend.position = "right"
+  )
+print(grafico_lineas)
+```
+
+
+
+
+
+
+
+Respuestas:
+
+¿Qué relación observa entre el nivel α y la tasa de error tipo I estimada?
+
+- De los resultados obtenidos podemos ver que a medida que aumenta $\alpha$ el error de tipo I (rechazar $H_o$ cuando es verdadera) también aumenta, es decir, a medida que aumentamos la probabilidad con la que aceptamos el tipo de error, este aumenta. Por otro lado, ocurre lo mismo con la Potencia $Power = 1 - \beta$ la cual aumenta a medida que se incrementa $\alpha$. Es decir, a medida que aumenta $\alpha$, también aumenta la probabilidad de detectar un efecto real cuando este efectivamente es real. A partir de aqui también podemos ver que el test de $t$ de Welch cumple en rechazar incorrectamente $H_0$ en aproximadamente $\alpha %$ de los casos.
+
+
+¿Cambia la potencia al aumentar α? ¿Por qué?
+
+- La potencia cambia al aumentar $\alpha$, cuando este último aumenta, también lo hace la Potencia. Esto sucede ya que la Potencia es la probabilidad de rechazar $H_0$ cuando $H_0$ es falsa (probabilidad de detectar el efecto real cuando este efectivamente es real). En particular, un $alpha$ más alto significa un umbral más permisivo del $p-value$ para cuando se decide si rechar o no $H_0$, y por tanto al ser más permisivo, la Potencia aumenta.
+
+
+Conecte sus conclusiones con las definiciones de **α, β y 1−β (potencia)** vistas en clases.
+
+- En particular, $\alpha$ sirve para los Errores de Tipo I (rechazar $H_0$ cuando esta es verdadera), equivalente a un Falso Positivo. Por otro lado, $\beta$ sirve para los Errores de Tipo II (no rachazar $H_0$ cuando esta es falsa), equivalente a un Falso Negativo. Mientras que $1-\beta$ implica rechazar $H_0$ cuando esta es falsa, equivalente a un Verdadero Positivo.
+
+- Al aumentar $\alpha$ aumentan los Errores de Tipo I que se aceptan (Falsos Positivos), y disminuye la cantidad de Errores de Tipo II (Falsos Negativos), es decir, hay una relación inversa entre $\alpha$ y $\beta$. 
+
+
+------------------------------------------------------------------------
+
+### Pregunta 4: Diferencias por género y relación entre regresión lineal y test de hipótesis
+
+\
+En un estudio sobre comportamiento de consumo en restaurantes, se registraron las propinas dejadas por hombres y mujeres, junto con el monto total de la cuenta y otros atributos. Se desea analizar si, en promedio, existe una diferencia en las propinas entregadas según el género, y si esta diferencia puede explicarse parcialmente por el monto total de la cuenta.
+
+Para ello se utilizará el dataset público [`tips`](https://raw.githubusercontent.com/mwaskom/seaborn-data/master/tips.csv), disponible en línea, que contiene las siguientes variables:
+
+| Variable                        | Descripción                                                |
+|--------------------------|----------------------------------------------|
+| `tip`                           | Monto de la propina (en dólares)                           |
+| `total_bill`                    | Total de la cuenta del grupo (en dólares)                  |
+| `sex`                           | Género del cliente que dejó la propina (`Male` / `Female`) |
+| `day`, `time`, `smoker`, `size` | Otras características del grupo                            |
+
+------------------------------------------------------------------------
+
+**Instrucciones:**
+
+1.  Cargue y explore los datos
+    -   Lea el archivo CSV directamente desde el enlace anterior.
+    -   Identifique las variables relevantes `tip`, `sex` y `total_bill`.
+    -   Realice un resumen descriptivo de las propinas por sexo: medias, desviaciones estándar y tamaño muestral de cada grupo.
+2.  Regresión lineal simple
+    -   Codifique la variable `sex` como variable dummy `sex_num`.
+    -   Calcule manualmente (con una función) los coeficientes del modelo lineal: $$
+        \hat{\beta}_1 = \frac{\sum (x_i - \bar{x})(y_i - \bar{y})}{\sum (x_i - \bar{x})^2}, \quad
+        \hat{\beta}_0 = \bar{y} - \hat{\beta}_1 \bar{x}
+        $$ donde $x_i$ corresponde a `sex_num` y $y_i$ a `tip`. **No puede utilizar la función de regresión lineal nativa de R.**
+    -   Interprete los valores de $\beta$ obtenidos, que significa cada valor?
+3.  Relación con test de hipótesis
+    -   Contraste la hipótesis: $$
+        H_0: \beta_1 = 0 \quad \text{vs} \quad H_1: \beta_1 \neq 0
+        $$ mediante el **t-test del coeficiente** reportado por `summary(lm())`.\
+    -   Verifique que este resultado coincide con un **t-test de dos muestras** aplicado a `tip ~ sex` usando `t.test()`.
+4.  Extensión del modelo
+    -   Ajuste un modelo ampliado que incorpore el monto total de la cuenta: $$
+        tip_i = \beta_0 + \beta_1 \cdot sex_i + \beta_2 \cdot total\_bill_i + \varepsilon_i
+        $$
+        -   Interprete el nuevo valor de $\hat{\beta}_1$.
+        -   ¿Disminuye la magnitud de la diferencia entre géneros al controlar por `total_bill`?
+        -   ¿Qué implicaría esto en términos de causalidad o variables confusoras?
+5.  Visualización y análisis
+    -   Genere un gráfico que muestre la relación entre `total_bill` y `tip`, coloreado por `sex`, agregando la línea de regresión lineal.
+    -   Comente visualmente si el efecto del género parece mantenerse tras controlar por el monto total.
+6.  Reflexione y concluya
+    -   ¿El coeficiente β₁ (sexo) es estadísticamente significativo? ¿Qué indica su signo?
+    -   ¿Qué diferencia observa entre el resultado del test t de dos muestras y el del modelo de regresión?
+    -   ¿Cómo cambia β₁ al agregar `total_bill`? ¿Qué sugiere esto respecto a posibles variables confusoras?
+    -   ¿Podemos afirmar causalmente que el género determina el monto de propina?
+    -   Conecte sus conclusiones con el concepto de **test de hipótesis sobre β** y su interpretación como evidencia contra $H_0$.
+
+```{r}
+set.seed(17)
+
+# 1. Cargar datos reales desde GitHub
+tips <- read.csv("https://raw.githubusercontent.com/mwaskom/seaborn-data/master/tips.csv")
+```
+
+```{r}
+# Estadísticas descriptivas por sexo
+resumen_por_sexo <- tips %>%
+  group_by(sex) %>%
+  summarise(
+    n = n(),
+    media_tip = mean(tip),
+    sd_tip = sd(tip),
+    media_total_bill = mean(total_bill),
+    sd_total_bill = sd(total_bill),
+    min_tip = min(tip),
+    max_tip = max(tip)
+  )
+
+print(resumen_por_sexo)
+```
+
+```{r}
+# 2. Regresión lineal simple
+# Codificación de 'sex' como variable dummy -> sex_num
+# Male = 1, Female = 0
+tips$sex_num <- ifelse(tips$sex == "Male", 1, 0)
+
+linear_coefs <- function(x,y) {
+  # Medias
+  x_mean <- mean(x)
+  y_mean <- mean(y)
+  
+  # Beta_1
+  numerador <- sum( (x - x_mean) * (y - y_mean)  )
+  denominador <- sum( (x - x_mean)^2 )  
+  beta_1 <- numerador / denominador
+  
+  # Beta_0 -= y_mean - Beta_1 * x_mean
+  beta_0 <- y_mean - beta_1 * x_mean
+  
+  return( list(beta_0 = beta_0, beta_1 = beta_1))
+}
+
+# Calcular coeficientes
+coefs <- linear_coefs(tips$sex_num, tips$tip)
+
+cat(sprintf("Beta_0 (intercepto): %.6f\n", coefs$beta_0))
+cat(sprintf("Beta_1 (pendiente): %.6f\n", coefs$beta_1))
+```
+
+Respuesta: Como nuestro modelo lineal es $\hat{y} = \beta_0 + \beta_1 x_i$, tenemos que cuando es un hombre $x_i = sex\_num_{i}= 1$, mientras que cuando es una mujer se tiene $x_i = sex\_num_{i}= 0$. Esto significa que para los hombres se tiene:
+
+$\hat{y} = \beta_0 + \beta_1 * 1 = 2.8334 + 0.2561*1$
+
+Mientras que para las mujeres:
+
+$\hat{y} = \beta_0 + \beta_1 * 0= 2.8334$ 
+
+Es decir, la propina promedio estimada para las mujeres es de \$2.8334 ($\beta_0$), mientras que para los hombres la diferencia es \$0.2561 mayor ($\beta_1$).
+
+
+```{r}
+# 3. Relación con test de hip+otesis
+# t-test del coeficiente de lm
+model_summary <- summary(lm(tip ~ sex_num, data = tips))
+print(model_summary)
+```
+
+```{r}
+# t-test de dos muestras
+test_t_2 <- t.test(tip ~ sex, data = tips, var.equal = TRUE)
+print(test_t_2)
+```
+
+Respuesta: La hipótesis $H_0: \beta_1=0$ implica que no hay diferencias entre las propinas dejadas por ambos géneros. Mientras que la hipótesis $H_1: \beta_1 \neq 0$ implica que si hay diferencia entre géneros.
+
+Del modelo $lm$ se obtiene que $t = 1.387860$ y $p = 0.166456$, como $p=0.1664 > \alpha=0.05$ no rechazamos $H_0: \beta_1=0$. Esto también significa que no hay evidencia suficiente para aceptar $H_1: \beta_1 \neq 0$. Por tanto, podemos concluir que no hay suficiente evidencia estadística como para decir que existe una diferencia significativa en las propinas entre hombres y mujeres.
+
+Luego, al comparar el resultado con el de un t-test de dos muestras, podemos ver que se obtiene también que $|t| = 1.3879$ y $p-value = 0.1665$, por lo que ambos procedimientos son equivalentes.
+
+```{r}
+# 4. Extensión del modelo
+modelo_multiple <- lm(tip ~ sex_num + total_bill, data = tips)
+summary_multiple <- summary(modelo_multiple)
+print(summary_multiple)
+
+# Extraer coeficientes
+beta_0_mult <- coef(modelo_multiple)[1]
+beta_1_mult <- coef(modelo_multiple)[2]
+beta_2_mult <- coef(modelo_multiple)[3]
+
+# Print
+cat(sprintf("Beta_0 = %.6f\n",  beta_0_mult))
+cat(sprintf("Beta_1 = %.6f\n",  beta_1_mult))
+cat(sprintf("Beta_2 = %.6f\n",  beta_2_mult))
+
+cat("Comparación de Coeficientes: ")
+cat(sprintf("Modelo simple:   Beta_1 (sex) = %.6f\n", coefs$beta_1))
+cat(sprintf("Modelo múltiple: Beta_1 (sex) = %.6f\n", beta_1_mult))
+```
+Respuestas:
+Al comparar los coeficientes $\hat{\beta}_1$ entre el modelo lineal simple ($\hat{\beta}_1 = 0.2561$) y el extendido ($\hat{\beta}_1=-0.266$) podemos ver que el coeficiente disminuyó considerablemente, pasando de positivo a negativo. Este nuevo valor de $\hat{\beta}_1$ indica que cuando se trata de un hombre, la propina promedio disminuye en $0.026.
+
+Además, se puede ver que el $p-value$ de la variable 'sex_num' paso de 0.166 a 0.848, es decir, ahora la diferencia por género es estadísticamente no significativa para el modelo extendido y por tanto disminuye la magnitud entre géneros al agregar 'total_bill' como variable predictora.
+
+En términos de variables confusoras, total_bill representa una de estas, puesto que en el modelo simple podiamos ver una diferencia clara entre las propinas por género. Pero ahora observamos que no es solo el género el que genera diferencias en las propinas, sino que total_bill influye mucho más, pero al mismo tiempo entre ambos géneros pueden haber diferencias entre el monto total que gastan, volviendo a esta variable una 'variable confusora'. 
+
+En particular ahora el efecto del género desaparece para el modelo extendido ya que disminuyó la influencia de $\beta_1$. Además en cuanto a la variable confusora, podemos ver de la primera parte que entre ambos generos el total_bill tiene medias y desviaciones estándar similares, y por tanto el predictor (parámetro) con mayor influencia actual (total_bill) no está necesariamente guiado por el género. Un mejor método para medir el impacto real entre el género y el monto total de la cuenta sería realizar un análisis de correlaciones. 
+
+Aunque con los datos estadísticos no se puede afirmar causalidad, si podemos observar que el género no resultó ser el determinante del monto de la propina, sino que, independientemente del género, lo es el monto total 'total_bill'.
+
+Algo adicional a notar es el valor de $R^2$ entre ambos modelos, para el simple se obtuvo $R^2=0.0078$, mientras que para el extendio se obtuvo $R^2=0.4567$, por lo que este último modelo explica mucha mas variabilidad.
+
+
+
+```{r}
+# 5. Visualización y Análisis
+
+# Modelo simple
+# Relación total_bill vs tip, coloreado por sexo
+grafico_scatter <- ggplot(tips, aes(x = total_bill, y = tip, color = sex)) +
+  geom_point(alpha = 0.6, size = 2.5) +
+  geom_smooth(method = "lm", 
+              formula = y ~ 1,  # Solo intercepto, sin pendiente
+              se = TRUE, 
+              alpha = 0.2) +
+  scale_color_manual(values = c("Female" = "#FF6B6B", "Male" = "#4ECDC4")) +
+  labs(
+    title = "Modelo Simple: tip ~ sex",
+    subtitle = "Female: tip_i=β_0+ε_i\nMale: tip_i=β_0+β_1*1\nsex_{male}=1 & sex_{female}=0",
+    x = "Total de la cuenta ($)",
+    y = "Propina ($)",
+    color = "Género"
+  ) +
+  theme_minimal() +
+  theme(plot.title = element_text(face = "bold", size = 14))
+print(grafico_scatter)
+
+
+# Modelo extendido
+total_bill_range <- seq(min(tips$total_bill), max(tips$total_bill), length.out = 100)
+
+# Línea para Female (sex_num = 0)
+pred_female <- data.frame(
+  sex_num = 0,
+  total_bill = total_bill_range,
+  sex = "Female"
+)
+pred_female$tip <- predict(modelo_multiple, newdata = pred_female)
+pred_female$tipo <- "Female"
+
+# Línea para Male (sex_num = 1)
+pred_male <- data.frame(
+  sex_num = 1,
+  total_bill = total_bill_range,
+  sex = "Male"
+)
+pred_male$tip <- predict(modelo_multiple, newdata = pred_male)
+pred_male$tipo <- "Male"
+
+pred_combined <- rbind(
+  pred_female %>% select(total_bill, tip, sex, tipo),
+  pred_male %>% select(total_bill, tip, sex, tipo)
+)
+
+# Gráfico
+grafico_scatter <- ggplot(tips, aes(x = total_bill, y = tip, color = sex)) +
+  geom_point(alpha = 0.6, size = 2.5) +
+  
+  # Líneas por género del modelo extendido
+  geom_line(data = pred_combined, 
+            aes(x = total_bill, y = tip, color = sex),
+            linewidth = 1.3,
+            alpha = 0.9) +
+  
+  scale_color_manual(values = c("Female" = "#FF6B6B", "Male" = "#4ECDC4")) +
+  labs(
+    title = "Modelo Extendido: tip ~ sex + total_bill",
+    subtitle = "Female: tip_i = β_0 + β_2*total_bill_i\nMale: tip_i = β_0 + β_1*1 + β_2*total_bill_i\nsex_{male}=1 & sex_{female}=0",
+    x = "Total de la cuenta ($)",
+    y = "Propina ($)",
+    color = "Género"
+  ) +
+  theme_minimal() +
+  theme(plot.title = element_text(face = "bold", size = 14),
+        plot.subtitle = element_text(size = 10))
+
+print(grafico_scatter)
+```
+
+
+
+
+
+Respuesta: 
+
+- Al analizar visualmente las Regresiones Lineales obtenidas, diferenciando por genero mediante la variable 'sex_i' podemos observar que en el primer grafico (Modelo simple) existe una clara diferenciación, la cual ocurre cuando $sex_i = 1$, además, como en este caso el total de la cuenta no afecta se obtienen lineas paralelas al eje X. Por otra parte, al incluir el total de la cuenta como una variable predictora podemos observar que ambas rectas (correspondientes al modelo extendido, unicamente diferenciando si sex_i es 0 o 1) son practicamente iguales, y que por tanto, se puede concluir que el efecto del género no se mantiene tras controlar por el monto total.
+
+Respuestas parte 6:
+
+¿El coeficiente β₁ (sexo) es estadísticamente significativo? ¿Qué indica su signo?
+
+- El coeficiente $\beta_1$ no es estadísticamente significativo en el modelo múltiple, este parámetro paso de 0.2562 a -0.0266. Su signo negativo significa que los hombres dejan propinas levemente menores respecto a la mujeres (modelo extendido).
+
+¿Qué diferencia observa entre el resultado del test t de dos muestras y el del modelo de regresión?
+
+- En el modelo simple tanto el test t de dos muestras como el modelo de regresión son equivalentes en cuanto a resultados, sin embargo, su funcionamiento es distinto. Esta coincidencia se debe a que el test t de dos muestras compara directamente mediante las medias $\mu_{female}$ y $\mu_{male}$ basandose en los datos de propinas dejadas de acuerdo al género (sex_i), estos mismos datos son los usados en el modelo simple, coincidiendo en resultados mediante los parámetros $\beta_0$ (intercepto) que es el promedio de propina de mujeres, $\beta_1$ la diferencia en propina para los hombres. Lo que sucede es que luego para el modelo extendido habrá una diferencia al incorporar total_bill.
+
+¿Cómo cambia β₁ al agregar total_bill? ¿Qué sugiere esto respecto a posibles variables confusoras?
+
+- $\beta_1$ disminuye y cambia de signo al agregar total_bill. Esto sugiere que total_bill es una variable confusora, ya que puede haber una correlación entre la variable sex_i (hombre/mujer) y el monto total que gastan dependiendo de su género. Asimismo, total_bill esta vinculado directamente a la propina (cuando se deja un 10\%, 15\% o 20\%), es decir esta suele aumentar mientras total_bill aumenta.
+
+¿Podemos afirmar causalmente que el género determina el monto de propina?
+
+- No podemos afirmar que el género determina el monto de propina ya que $\beta_1$ no es estadísticamente significativo ($p=0.848 en el modelo extendido), y su influencia disminuye notablemente al incoporar total_bill como variable predictora. Asimismo, la explicabilidad del modelo solo con el género era baja (0.0078), mientras que con total_bill subió a 0.4567.
+
+Conecte sus conclusiones con el concepto de test de hipótesis sobre $\beta$ y su interpretación como evidencia contra $H_0$
+
+- Los test de hipótesis son $H_0: \beta_1=0$ vs $H_1: \beta_1 \neq 0$. Abordando ahora el modelo extendido tenemos que se obtuvo que $t=-0.192$ y $p-value=0.848>\alpha=0.05$, por tanto, no se rechaza $H_0$. Es decir no hay evidencia estadística suficiente para decir que el género tenga un efecto significativo en las propinas, una vez que se considera el monto total de la cuenta. 
+
+### Pregunta 5: R², R² ajustado y su relación con los tests de hipótesis
+
+\
+El dataset `mtcars` contiene información sobre automóviles (rendimiento, potencia, peso, número de cilindros, entre otras variables). Se desea modelar el consumo de combustible (`mpg`) a partir de distintas características del vehículo.
+
+**Instrucciones:**
+
+1.  Cargue y explore los datos
+    -   Cargue el dataset `mtcars` (incluido por defecto en R).
+    -   Identifique las variables `mpg` (consumo), `hp` (potencia), `wt` (peso) y `cyl` (número de cilindros).
+    -   Describa brevemente las correlaciones entre estas variables (use `cor()` o `ggpairs()` si lo desea).
+2.  Ajuste modelos lineales anidados (puede utilizar funciones nativas de R)
+    -   Modelo 1: $M_1: mpg \sim hp$
+
+    -   Modelo 2: $M_2: mpg \sim hp + wt$
+
+    -   Modelo 3: $M_3: mpg \sim hp + wt + cyl$
+
+    -   Presente los resúmenes de cada modelo (`summary(lm(...))`) y registre los valores de R² y R² ajustado.
+3.  Comparación entre modelos
+    -   Analice cómo cambian R² y R² ajustado entre $M_1, M_2, M_3$.
+    -   Discuta por qué R² siempre aumenta al agregar variables, mientras que R² ajustado puede disminuir.
+    -   Interprete estos resultados en términos de complejidad del modelo vs poder explicativo.
+4.  Variable irrelevante (control de sobreajuste)
+    -   Añada una variable aleatoria sin relación con `mpg` (mtcars\$noise \<-rnorm(nrow(mtcars))
+    -   Ajuste $M_4: mpg \sim hp + wt + cyl + noise$.
+    -   Compare R², R² ajustado y los p-values de los coeficientes
+    -   ¿Qué ocurre con el ajuste? ¿Por qué R² puede subir aunque la nueva variable no sea significativa?
+5.  Discusión y conclusiones
+    -   ¿Qué criterio resulta más confiable para comparar modelos, R² o R² ajustado?
+    -   ¿Cómo se refleja la inferencia de los coeficientes β (tests t) en los cambios de R² ajustado?
+    -   ¿Qué implicaciones tiene esto para la selección de modelos y el control del sobreajuste?
+
+```{r}
+set.seed(17)
+data(mtcars)
+
+# 1. variables y correlaciones
+# Estadísticas descriptivas
+print(head(mtcars))
+
+# Correlaciones
+variables_interes <- mtcars[, c("mpg", "hp", "wt", "cyl")]
+print(cor(variables_interes))
+```
+Respuesta: 
+Se puede observar que hay correlaciones principalmente negativas, por ejemplo 'mpg' (consumo) tiene solamente correlaciones negativas, Por otra parte, dentro de las positivas destacan 'hp' (potencia) con 'wt' (peso), 'hp' con 'cyl' (nro de cilindros) y 'wt' con 'cyl'. Además tambien destaca como todas tienen valores absolutos altos. Dentro del contexto, esto tiene sentido puesto que el consumo sera mayor si el peso es mayor, o si la potencia o numero de clindros es mayor.
+
+```{r}
+# 2, Modelos
+
+cat("Modelo 1")
+# Modelo 1: $M_1: mpg \sim hp$
+M1 <- lm(mpg ~ hp, data = mtcars)
+summary_M1 <- summary(M1)
+print(summary_M1)
+
+cat("Modelo 2")
+# Modelo 2: $M_2: mpg \sim hp + wt$
+M2 <- lm(mpg ~ hp + wt, data = mtcars)
+summary_M2 <- summary(M2)
+print(summary_M2)
+
+cat("Modelo 3")
+# Modelo 3: $M_3: mpg \sim hp + wt + cyl$
+M3 <- lm(mpg ~ hp + wt + cyl, data = mtcars)
+summary_M3 <- summary(M3)
+print(summary_M3)
+```
+Respuesta: Los valores de $R^2$ y $R^2$ ajustado para cada modelo fueron:
+M1: $R^2=0.6024$ $R^2_{ajustado}=0.5892$
+M2: $R^2=0.8268$ $R^2_{ajustado}=0.8148$
+M3: $R^2=0.8431$ $R^2_{ajustado}=0.8263$
+
+
+```{r}
+# 3. Comparación entre modelos
+comparacion_modelos <- data.frame(
+  Modelo = c("M1: mpg ~ hp", 
+             "M2: mpg ~ hp + wt", 
+             "M3: mpg ~ hp + wt + cyl"),
+  R_squared = c(summary_M1$r.squared, 
+                summary_M2$r.squared, 
+                summary_M3$r.squared),
+  R_squared_adj = c(summary_M1$adj.r.squared, 
+                    summary_M2$adj.r.squared, 
+                    summary_M3$adj.r.squared),
+  n_variables = c(1, 2, 3)
+)
+
+print(comparacion_modelos)
+```
+
+Respuesta:
+En cuanto a $R^2$ podemos observar que M2 (0.82) tiene un aumento de 0.23 con respecto a M1 (0.60), mientras que M3 (0.84) aumenta en 0.02 respecto a M2.
+En cuanto a $R^2_{ajustado}$ podemos observar que M2 (0.81) tiene un aumento de 0.23 con respecto a M1 (0.58), mientras que M3 (0.82) aumenta en 0.01 con respecto a M1.
+
+Fórmulas:
+
+$R^2 = 1 - \frac{SS_{res}}{SS_{tot}}$ y $R^2_{ajustado}= 1 - \frac{SS_{res}/(n-p)}{SS_{tot}/(n-1)}$
+
+$R^2$ siempre aumenta puesto que al agregar variables no aumenta $SS_{res}$, es decir, no aumenta la suma de cuadrados residuales (ocurren menos errores entre lo predicho y lo observado al agregar mas información especifica).
+
+Por otra parte, $R^2_{ajustado}$ puede disminuir ya que penaliza la complejidad mediante el termino $(n-p)$, esto ocurre cuando al agregar una nueva variable $SS_{res}$ no disminuye lo necesario, y por tanto la penalización es mayor a la mejora obtenida a partir de la variable.
+
+En términos de complejidad del modelo vs poder explicativo podemos decir que el añadir la variable 'wt' (peso) al modelo introdujo una gran disminución en los errores (explicabilidad), la cual superó a la penalización por añadir este nuevo término (complejitud). Y aunque esto también aplica para el cambio entre M2 y M3, se puede observar que la diferencia en el aumento es mucho menor, lo que indica que si bien la variable 'cyl' aporta explicabilidad, y esta es mayor a la penalización, el impacto no fue tan grande como con 'wt'. Aquí también cabe destacar que para una mejor comparación se debería hacer entre M1: mpg ~ hp a M2: mpg ~ hp + wt y entre M1: mpg ~ hp a M2*: mpg ~ hp + cyl.
+
+
+```{r}
+# 4. Incluir variable irrelevante => M4: mpg ~ hp + wt + cyl + noise
+
+# variable aleatoria sin relación con mpg
+mtcars$noise <- rnorm(nrow(mtcars))
+
+M4 <- lm(mpg ~ hp + wt + cyl + noise, data = mtcars)
+summary_M4 <- summary(M4)
+print(summary_M4)
+
+# Comparación M3 vs M4
+comparacion_M3_M4 <- data.frame(
+  Modelo = c("M3: sin noise", "M4: con noise"),
+  R_squared = c(summary_M3$r.squared, summary_M4$r.squared),
+  R_squared_adj = c(summary_M3$adj.r.squared, summary_M4$adj.r.squared),
+  p_value_hp = c(summary_M3$coefficients["hp", "Pr(>|t|)"], 
+                 summary_M4$coefficients["hp", "Pr(>|t|)"]),
+  p_value_wt = c(summary_M3$coefficients["wt", "Pr(>|t|)"], 
+                 summary_M4$coefficients["wt", "Pr(>|t|)"]),
+  p_value_cyl = c(summary_M3$coefficients["cyl", "Pr(>|t|)"], 
+                  summary_M4$coefficients["cyl", "Pr(>|t|)"]),
+  p_value_noise = c(NA, summary_M4$coefficients["noise", "Pr(>|t|)"])
+)
+
+print(comparacion_M3_M4)
+```
+Respuesta:
+
+- Respecto al ajuste tenemos que $R^2_{ajustado}$ disminuye de M3 0.8253 a M4 0.8119, esto ya que penaliza la incorporación de una nueva variable que no da tanta explicabilidad, pero si incorpora más complejidad al modelo.
+
+- Por otra parte, $R^2$ si pudo subir, pese a que la nueva variable $noise$ no sea significativa ($p-value = 0.9424 > \alpha=0.05$) ya que por coincidencia estos ruidos pueden efectivamente generar alguna correlación con los datos que se trabajan, si es que ocurre una reducción de errores, entonces $R^2$ simplemente aumentará sin considerar la complejidad. Esto también permite identificar que aunque el modelo pueda presentar un mejor ajuste según $R^2$ a los datos, esto puede deberse a razones aleatorias en vez de por patrones reales entre los datos (correlaciones).
+
+- Respecto a los otros p-values podemos observar de la tabla que se mantienen relativamente cercanos en valor.
+
+Respuestas parte 5:
+
+¿Qué criterio resulta más confiable para comparar modelos, R² o R² ajustado?
+
+- $R^2$ ajustado resulta un criterio más confiable para comparar modelos cuando se estan añadiendo nuevas variables, puesto que penaliza la complejidad, es decir favorece modelos más simples, mientras que al mismo tiempo sigue representando la misma significancia que $R^2$ (explicabilidad del modelo).
+
+
+¿Cómo se refleja la inferencia de los coeficientes $\beta$ (tests t) en los cambios de $R^2$ ajustado?
+
+- La inferencia de los coeficientes (test t) se refleja en los cambios de $R^2$ ajustado mediante el $p-value$, es decir coeficientes significativos aumentarán $R^2$ ajustado, mientras que los no significativos lo disminuiran debido a la penalización. Tanto $R^2$ ajustado como los test t permiten identificar variables predictoras realmente influyentes.
+
+
+¿Qué implicaciones tiene esto para la selección de modelos y el control del sobreajuste?
+
+- En cuanto a la selección de modelos tenemos que $R^2$ ajustado funciona como criterio fiable para esta labor, a diferencia de $R^2$ que solo indica la explicabilidad sin considerar la complejitud del modelo. En este sentido, un modelo que considere más variables, y al incluirlas no disminuya $R^2$ ajustado, sino que aumente, es más preferible. Asimismo, si el cambio es muy leve al incluir más variables, se puede optar por usar el modelo más simple para optimizar recursos.
+
+- En cuanto al control del sobreajuste tenemos que si $R^2$ aumenta, pero $R^2$ ajustado disminuye al aumentar las variables utilizadas por el modelo, entonces puede estar ocurriendo que este esté memorizando los datos en vez de aprender a identificar patrones, y por tanto al querer predecir sobre datos nuevos fallará. En este sentido $R^2$ ajustado permite evitar un posible sobreajuste.
+
+
+
+<hr />
+
+<p style="text-align: center;">
+
+A work by <a href="https://github.com/dccuchile/CC6104">CC6104</a>
+
+</p>
+
+<!-- Add icon library -->
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.1/css/all.css">
+
+<!-- Add font awesome icons -->
+
+<p style="text-align: center;">
+
+<a href="https://github.com/dccuchile/CC6104"><i class="fab fa-github" style='font-size:30px'></i></a> <a href="https://discord.gg/XCbQvGs3Uf"><i class="fab fa-discord" style='font-size:30px'></i></a>
+
+</p>
+
+ 

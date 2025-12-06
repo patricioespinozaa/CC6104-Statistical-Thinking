@@ -1,0 +1,1282 @@
+---
+title: "Tarea 4"
+output:
+  html_document:
+    df_print: paged
+  pdf_document: default
+---
+
+![](banner.png)
+
+<center>
+
+<h1>Tarea 4: Bayesian Inference</h1>
+
+</center>
+
+<center><strong>CC6104: Statistical Thinking</strong></center>
+
+#### **Integrantes :**
+
+-   Patricio Espinoza A.
+
+#### **Cuerpo Docente:**
+
+-   Profesor: Felipe Bravo M.
+-   Auxiliar: Matías Godoy
+-   Ayudantes: Scarleth Betancurt, Máximo Flores y Laura Maldonado
+
+### **Índice:**
+
+1.  [Objetivo](#id1)
+2.  [Instrucciones](#id2)
+3.  [Referencias](#id3)
+4.  [Elaboración de Código](#id5)
+
+### **Objetivo**<a name="id1"></a>
+
+Bienvenides a la cuarta tarea del curso Statistical Thinking. Esta tarea tiene como objetivo evaluar los contenidos teóricos de la primera parte del curso, los cuales se enfocan principalmente en introducirlos en la estadística bayesiana. Si aún no han visto las clases, se recomienda visitar los enlaces de las referencias.
+
+La tarea consta de una parte práctica con el fin de introducirlos a la programación en R enfocada en el análisis estadístico de datos.
+
+### **Instrucciones:**<a name="id2"></a>
+
+-   La tarea se realiza en grupos de **máximo 2 personas**. Pero no existe problema si usted desea hacerla de forma individual.
+-   La entrega es a través de u-cursos a más tardar el día estipulado en la misma plataforma. A las tareas atrasadas se les descontará un punto por día.
+-   El formato de entrega es este mismo **Rmarkdown** y un **html** con la tarea desarrollada. Por favor compruebe que todas las celdas han sido ejecutadas en el archivo html.
+-   Al momento de la revisión tu código será ejecutado. Por favor verifica que tu entrega no tenga errores de compilación.
+-   No serán revisadas tareas desarrolladas en Python.
+-   Está **PROHIBIDO** la copia o compartir las respuestas entre integrantes de diferentes grupos.
+-   Pueden realizar consultas de la tarea a través de U-cursos y/o del canal de Discord del curso.
+
+### **Referencias:**<a name="id3"></a>
+
+Slides de las clases:
+
+-   [Introduction to Bayesian Inference](https://github.com/dccuchile/CC6104/blob/master/slides/3_1_ST-bayesian.pdf)
+-   [Summarizing the Posterior](https://github.com/dccuchile/CC6104/blob/master/slides/3_2_ST-posterior.pdf)
+
+Videos de las clases:
+
+-   Introduction to Bayesian Inference: [video1](https://youtu.be/Gf2uuElPH0g) [video2](https://youtu.be/5ZZ3PTPdZQw) [video3](https://youtu.be/d_jXwM_-5jc) [video4](https://youtu.be/yZW1V3X4J94) [video5](https://youtu.be/-fw0ktR7psM) [video6](https://youtu.be/0oK9M82sw8Q) [video7](https://youtu.be/u7Qdw5rDDDU)
+-   Summarizing the Posterior: [video1](https://youtu.be/67o8wcZsgtk) [video2](https://youtu.be/Xr8S1Uv_5GQ) [video3](https://youtu.be/XJKyW4tYp_0) [video4](https://youtu.be/OMipgV727wo)
+
+Documentación:
+
+-   [rethinking](https://github.com/rmcelreath/rethinking)
+-   [tidyr](https://tidyr.tidyverse.org)
+-   [purrr](https://purrr.tidyverse.org)
+-   [dplyr](https://dplyr.tidyverse.org)
+-   [ggplot2](https://ggplot2.tidyverse.org/)
+
+#Elaboración de Código<a name="id5"></a>
+
+En la siguiente sección deberá resolver cada uno de los experimentos computacionales a través de la programación en R. Para esto se le aconseja que cree funciones en R, ya que le facilitará la ejecución de gran parte de lo solicitado.
+
+Para el desarrollo preste mucha atención en los enunciados, ya que se le solicitará la implementación de métodos sin uso de funciones predefinidas. Por otro lado, Las librerías permitidas para desarrollar de la tarea 4 son las siguientes:
+
+```{r}
+#if (!requireNamespace("pkgbuild", quietly = TRUE)) install.packages("pkgbuild")
+#pkgbuild::has_build_tools(debug = TRUE)
+```
+
+```{r}
+#cmdstanr::check_cmdstan_toolchain(fix = TRUE)
+#install.packages("cmdstanr", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
+#library(cmdstanr)
+#check_cmdstan_toolchain()
+```
+
+
+```{r}
+#library(cmdstanr)
+#cmdstanr::install_cmdstan()
+#install.packages("remotes")
+#remotes::install_github("rmcelreath/rethinking")
+```
+
+
+
+```{r}
+# Manipulación y funcional
+library(tidyverse)
+library(dplyr)
+library(tidyr)
+library(purrr)
+
+# Plots
+library(scatterplot3d)
+library(ggplot2)
+library(plotly)
+
+# Varios plots
+library(gridExtra)
+
+# Análisis bayesiano
+library(rethinking)
+packageVersion("rethinking")
+set.seed(26) 
+```
+
+Si no tiene instalada la librería “rethinking”, ejecute las siguientes líneas de código para instalar la librería:
+
+```{r, eval = FALSE}
+#install.packages("rethinking")
+```
+
+En caso de tener problemas al momento de instalar la librería con el código anterior, utilice las siguiente chunk:
+
+```{r, eval = FALSE}
+#install.packages(c("mvtnorm","loo","coda"), repos="https://cloud.r-project.org/",dependencies=TRUE)
+#options(repos=c(getOption('repos'), rethinking='http://xcelab.net/R'))
+#install.packages('rethinking',type='source')
+```
+
+Por último, si sigue con problemas, intentar con el siguiente script:
+
+<https://github.com/dccuchile/CC6104/blob/master/scripts/rethinking_install.R>
+
+En caso de no lograr instalar la librería a pesar de estos pasos, favor contactar al auxiliar por correo.
+
+### Pregunta 1: Tasa de conversión en e-commerce (Binomial)
+
+Se dispone del archivo local `online_shoppers_intention-2.csv`, donde la variable `Revenue` indica si un usuario realizó una compra (`TRUE/FALSE` o `1/0`). Se busca estimar la **tasa de conversión promedio** y analizar cómo cambia la inferencia bayesiana al variar el prior y el tamaño de muestra.
+
+**Se pide:**
+
+1.  Cargue el archivo y convierta `Revenue` a variable binaria {0,1}. Calcule la tasa global de conversión.
+    -   ¿Qué proporción de usuarios realizó una compra?
+2.  Implemente una **grid approximation** para $p \in [0,1]$ con 1000 puntos usando los priors:
+    -   Prior A: $p \sim N(0.14, 0.05)$
+    -   Prior B: $p \sim \text{Uniforme}(0,1)$.
+3.  Para tamaños de muestra $n \in \{10, 50, 500, 1000\}$, muestree datos aleatorios, calcule $x=\sum \text{Revenue}$ y grafique las **posteriores** $p\mid x,n$ para ambos priors y comparelo con el valor real.
+    -   ¿Cómo cambia la forma de la posterior al aumentar $n$?
+4.  Ajuste el modelo con **Laplace approximation** (`quap`) bajo prior uniforme y compare sus resultados con el método de grilla.
+    -   ¿Los parámetros estimados son coherentes con los obtenidos por grid approximation?
+5.  Calcule los **intervalos de credibilidad** y **HPDI** al 50% y 95%.
+    -   ¿Son similares estos intervalos? ¿Porqué?
+    -   ¿Que diferencia tiene con respecto al intervalo de confianza de el enfoque frecuentista?
+
+**Respuesta:**
+
+```{r}
+set.seed(26) 
+```
+
+```{r}
+# Parte 1
+datos_ecom <- read_csv("datos/online_shoppers_intention-2.csv", show_col_types = FALSE)
+
+# Convertir Revenue a binaria (0/1)
+datos_ecom <- datos_ecom %>%
+  mutate(Revenue = as.numeric(Revenue))
+
+# Calcular tasa global de conversión
+tasa_global <- mean(datos_ecom$Revenue)
+cat("Tasa global de conversión:", round(tasa_global, 4), "o", round(tasa_global * 100, 2), "%\n")
+cat("Total de conversiones:", sum(datos_ecom$Revenue), "de", nrow(datos_ecom), "usuarios\n")
+```
+
+
+RESPUESTA:
+La tasa de conversión (proporción de usuarios que realizó una compra) es del $15,47\%$. Es decir, 1.908 de los 12.330 usuarios
+
+
+
+```{r}
+# Parte 2
+# Definir grilla de 1000 puntos
+p_grid <- seq(0, 1, length.out = 1000)
+
+# Prior A: Normal(0.14, 0.05)
+prior_A <- dnorm(p_grid, mean = 0.14, sd = 0.05)
+
+# Prior B: Uniforme(0, 1)
+prior_B <- rep(1, 1000)  
+```
+
+
+
+
+```{r}
+# Parte 3
+tamanos <- c(10, 50, 500, 1000)
+
+# Función para calcular posterior usando grid approximation
+calcular_posterior <- function(p_grid, prior, x, n) {
+  # Likelihood: Binomial
+  likelihood <- dbinom(x, size = n, prob = p_grid)
+  
+  # Posterior no normalizada
+  posterior_no_norm <- likelihood * prior
+  
+  # Posterior normalizada
+  posterior <- posterior_no_norm / sum(posterior_no_norm)
+  
+  return(posterior)
+}
+
+# dataframe para almacenar resultados
+resultados_grid <- data.frame()
+
+for (n in tamanos) {
+  # Muestrear n observaciones
+  muestra <- sample(datos_ecom$Revenue, size = n, replace = FALSE)
+  # sum de revenue
+  x <- sum(muestra)  
+  
+  # Calcular posteriores para ambos priors
+  posterior_A <- calcular_posterior(p_grid, prior_A, x, n)
+  posterior_B <- calcular_posterior(p_grid, prior_B, x, n)
+  
+  # resultados
+  temp_df <- data.frame(
+    p = rep(p_grid, 2),
+    posterior = c(posterior_A, posterior_B),
+    prior_tipo = rep(c("Prior A: N(0.14, 0.05)", "Prior B: Uniforme"), each = 1000),
+    n = n,
+    x = x,
+    tasa_muestral = x/n
+  )
+  
+  resultados_grid <- bind_rows(resultados_grid, temp_df)
+}
+
+# Graficar posteriores para cada tamaño de muestra
+plots_list <- list()
+
+for (i in seq_along(tamanos)) {
+  n_actual <- tamanos[i]
+  datos_plot <- resultados_grid %>% filter(n == n_actual)
+  
+  p <- ggplot(datos_plot, aes(x = p, y = posterior, color = prior_tipo)) +
+    geom_line(linewidth = 1) +
+    geom_vline(xintercept = tasa_global, linetype = "dashed", color = "red", linewidth = 0.8) +
+    geom_vline(xintercept = unique(datos_plot$tasa_muestral), 
+               linetype = "dotted", color = "blue", linewidth = 0.8) +
+    labs(title = paste0("n = ", n_actual, ", x = ", unique(datos_plot$x)),
+         x = "Tasa de conversión (p)",
+         y = "Densidad posterior",
+         color = "Prior") +
+    theme_minimal() +
+    theme(legend.position = "bottom") +
+    annotate("text", x = tasa_global, y = 0, 
+             label = paste0("Tasa real: ", round(tasa_global, 3)), 
+             hjust = -0.1, vjust = -1, color = "red", size = 3)
+  
+  plots_list[[i]] <- p
+}
+
+# graficos
+grid.arrange(grobs = plots_list, ncol = 2)
+```
+
+
+RESPUESTA:
+Al aumentar $n$ la forma de la distribución posterior cambia de manera más predecible debido al comportamiento de la verosimilitud. 
+En particular, para $n$ pequeños el prior predomina y por tanto influye más en el posterior, lo que genera las distribuciones posteriores distintas que se pueden observar en el primer gráfico.
+Por otro lado, a medida que se aumenta el $n$ la verosimilitud tiene mayor influencia, esto debido a que hay mayor información al tener más datos, y por consiguiente ambas priors generan distribuciones 
+de posterior muy similares entre si. Estas distribuciones también llegan a concentrarse alrededor de la tasa real de conversión que se obtuvo previamente.
+
+En general, aumentar $n$ permite que haya una menor varianza entre los datos, lo que implica que la verosimilitud sea más influyente en $posterior(p|x,n)$ $\alpha$ $Likelihood(x|p,n)\cdot prior(p)$ y por tanto las diferencias entre priors se vean reducidas en la distribución posterior obtenida.
+
+
+```{r}
+# Parte 4
+# 4. Laplace Approximation con quap (prior uniforme)
+x_total <- sum(datos_ecom$Revenue)  # x: Total de éxitos (conversiones)
+n_total <- nrow(datos_ecom)          # n: Total de intentos (visitantes)
+
+datos_quap <- list(x = x_total, n = n_total)
+
+modelo_quap <- quap(
+  alist(
+    x ~ dbinom(n, p),      # x éxitos en n intentos (Binomial)
+    p ~ dunif(0, 1)        # Prior uniforme
+  ),
+  data = datos_quap
+)
+
+# Resultados
+precis(modelo_quap)
+
+# parámetros estimados
+params_quap <- precis(modelo_quap, prob = 0.95)
+media_quap <- params_quap[1, "mean"]
+sd_quap <- params_quap[1, "sd"]
+
+cat("\n Media posterior (quap):", round(media_quap, 4))
+cat("\n Desviación estándar:", round(sd_quap, 4))
+
+# Comparar con grid approximation (n = total)
+x_total <- sum(datos_ecom$Revenue)
+n_total <- nrow(datos_ecom)
+
+posterior_grid_total <- calcular_posterior(p_grid, prior_B, x_total, n_total)
+
+# Calcular media y SD de grid approximation
+media_grid <- sum(p_grid * posterior_grid_total)
+var_grid <- sum((p_grid - media_grid)^2 * posterior_grid_total)
+sd_grid <- sqrt(var_grid)
+
+cat("\n Comparación Grid vs Quap:")
+cat("\n Media - Grid:", round(media_grid, 4), "| Quap:", round(media_quap, 4))
+cat("\n SD - Grid:", round(sd_grid, 4), "| Quap:", round(sd_quap, 4))
+cat("\n Diferencia en media:", round(abs(media_grid - media_quap), 6))
+```
+
+
+
+RESPUESTA:
+
+Al comparar las medias posterior y desviación estándar posterior entre los resultados obtenidos entre grid y Laplace approximation podemos ver que ambas son muy cercanas ($0.1548$ y $0.1547$ respectivamente), al mismo tiempo que ambas poseen la misma desviación estándar, y que por tanto se puede afirmar que los parámetros obtenidos por Laplace son coherentes con los de Grid.
+
+
+
+```{r}
+# 5. Intervalos de credibilidad y HPDI
+# Muestrear de la posterior
+samples_quap <- extract.samples(modelo_quap, n = 10000)
+
+# Intervalos de credibilidad (Percentile Interval - PI)
+PI_50 <- PI(samples_quap$p, prob = 0.50)
+PI_95 <- PI(samples_quap$p, prob = 0.95)
+
+# HPDI (Highest Posterior Density Interval)
+HPDI_50 <- HPDI(samples_quap$p, prob = 0.50)
+HPDI_95 <- HPDI(samples_quap$p, prob = 0.95)
+
+cat("\n - Intervalos de Credibilidad (PI)")
+cat("\n 50% PI: [", round(PI_50[1], 4), ",", round(PI_50[2], 4), "]")
+cat("\n 95% PI: [", round(PI_95[1], 4), ",", round(PI_95[2], 4), "]")
+
+cat("\n - Intervalos HPDI")
+cat("\n 50% HPDI: [", round(HPDI_50[1], 4), ",", round(HPDI_50[2], 4), "]")
+cat("\n 95% HPDI: [", round(HPDI_95[1], 4), ",", round(HPDI_95[2], 4), "]")
+
+# Calcular anchuras de intervalos
+cat("\n - Comparación de anchuras ")
+cat("\n Anchura PI 50%:", round(PI_50[2] - PI_50[1], 4))
+cat("\n Anchura HPDI 50%:", round(HPDI_50[2] - HPDI_50[1], 4))
+cat("\n Anchura PI 95%:", round(PI_95[2] - PI_95[1], 4))
+cat("\n Anchura HPDI 95%:", round(HPDI_95[2] - HPDI_95[1], 4))
+
+# Visualizar intervalos
+ggplot(data.frame(p = samples_quap$p), aes(x = p)) +
+  geom_density(fill = "skyblue", alpha = 0.5) +
+  geom_vline(xintercept = c(PI_95[1], PI_95[2]), 
+             color = "blue", linetype = "dashed", linewidth = 1) +
+  geom_vline(xintercept = c(HPDI_95[1], HPDI_95[2]), 
+             color = "red", linetype = "dotted", linewidth = 1) +
+  geom_vline(xintercept = media_quap, color = "black", linewidth = 1.2) +
+  labs(title = "Distribución Posterior con Intervalos de Credibilidad",
+       subtitle = "Azul: PI 95% | Rojo: HPDI 95% | Negro: Media",
+       x = "Tasa de conversión (p)",
+       y = "Densidad") +
+  theme_minimal()
+
+# Intervalo de confianza frecuentista
+prop_test <- prop.test(x_total, n_total)
+IC_freq_95 <- prop_test$conf.int
+
+cat("\n Intervalo de Confianza 95% (frecuentista): [", 
+    round(IC_freq_95[1], 4), ",", round(IC_freq_95[2], 4), "]")
+cat("\n Intervalo de Credibilidad 95% (bayesiano PI): [", 
+    round(PI_95[1], 4), ",", round(PI_95[2], 4), "]")
+cat("\n Diferencia en límite inferior:", round(abs(IC_freq_95[1] - PI_95[1]), 4))
+cat("\n Diferencia en límite superior:", round(abs(IC_freq_95[2] - PI_95[2]), 4))
+
+```
+
+
+
+RESPUESTA:
+
+5.1 
+
+Tenemos que los intervalos de credibilidad al 50\% y 95\% resultaron ser casi identicos para PI Y HPDI:
+- Para PI 50\% se obtuvo [0.1525, 0.157], mientras que para HPDI 50\% [0.1523, 0.1567]
+- Para PI 95\% se obtuvo [0.1484, 0.1612], mientras que para HPDI 95\% se obtuvo [0.1484, 0.1613]
+
+La razón de esto es la distribución de la posterior, como se puede observar en el grafico es aproximadamente una distribución normal, y por tanto simetrica, Esta simetria implica que el HPDI, el cual se concentra más en las zonas de mayor densidad (util en distribuciones asimetricas),resulte ser muy parecido al de PI que no se enfoca en la densidad sino que en las colas de la distribución.
+
+Es decir, dada la distribución simetrica de la posterior, ambos criterios obtienen intervalos casi identicos.
+
+5.2 
+
+La diferencia entre el enfoque frecuentista y el bayesiano es que:
+
+En el frecuentista el intervalo de confianza (IC) la idea de la contención del parametro verdadero está dada por la repeteción del experimento muchas veces.En donde el parámetro es fijo pero desconocido, y la aleatoriedad está dada en los datos. $\rightarrow$ "si se repite el experimento 1.000.000 de veces, entonces el 95\% de los intervalos contendrá el verdadero parámetro". 
+
+Por otra parte el Bayesiano (PI/HPDI) se basa en la probablidad de que el parametro se encuentre en un intervalo dado los datos y el prior. Es decir, aquí el parámetro tiene una distribución de probabilidad, permitiendo hacer afirmaciones probabilisticas sobre el parámetro puesto que se trata como una variable aleatoria. $\rightarrow$ "hay un 95\% de probabilidad de que el verdadero parámetro este en este intervalo dado los datos y el prior".
+
+
+------------------------------------------------------------------------
+
+### Pregunta 2: Estimación bayesiana conjunta
+
+Se dispone del archivo `student-mat.csv`, donde la variable `G3` representa las notas finales.\
+Se asume que las notas provienen de una distribución normal $G3 \sim N(\mu,\sigma^2)$.\
+Se desea estimar $\mu$ y $\sigma$ mediante inferencia bayesiana con dos priors distintos y analizar cómo cambian los resultados.
+
+**Se pide:**
+
+1.  Cargue el archivo y extraiga la variable `G3`.
+2.  Defina las grillas:
+    -   $\mu$: de $\min(x)-2$ a $\max(x)+2$ (con 500 puntos)
+    -   $\sigma$: de 0.5 a 6 (con 500 puntos).
+3.  Defina dos priors:
+    -   **Prior 1 (informativo):** $\mu \sim N(10,3)$, $\sigma \sim N(4.5,1)$.
+    -   **Prior 2 (débil):** $\mu \sim N(20,0.1)$, $\sigma \sim \text{Uniforme}(0.5,6)$.
+4.  Calcule la **log-verosimilitud** y la **log-posterior** para cada prior, y normalice.
+5.  Grafique la **posterior conjunta** ($\mu,\sigma$) como mapa de calor para ambos priors, restringiendo los ejes a $\mu \in [9,11]$ y $\sigma \in [4,5]$.
+    -   ¿Dónde se concentra la masa posterior en cada prior?
+    -   ¿Existe una diferencia grande entre ambos gráficos?
+6.  Muestree 10.000 valores de cada posterior y grafique las **densidades marginales** de $\mu$ y $\sigma$
+    -   ¿Los priors producen diferencias notorias en la media o la dispersión?
+7.  Calcule los **HPDI 95%** para ambos parámetros y ambos priors.
+
+**Respuesta:**
+
+```{r}
+# Parte 1
+datos_estudiantes <- read_csv("datos/student-mat.csv", show_col_types = FALSE)
+G3 <- datos_estudiantes$G3
+
+cat("- Estadísticas variable G3\n")
+cat("Media:", mean(G3), "\n")
+cat("Desviación estándar:", sd(G3), "\n")
+cat("Min:", min(G3), "| Max:", max(G3), "\n")
+cat("N observaciones:", length(G3), "\n\n")
+```
+
+
+
+```{r}
+# Parte 2
+# definir grillas
+mu_grid <- seq(min(G3) - 2, max(G3) + 2, length.out = 500)
+sigma_grid <- seq(0.5, 6, length.out = 500)
+
+
+# grid combinado 
+grid_params <- expand.grid(mu = mu_grid, sigma = sigma_grid)
+```
+
+```{r}
+# Parte 3
+# Prior 1 (informativo): mu ~ N(10, 3), sigma ~ N(4.5, 1)
+prior1_mu <- dnorm(grid_params$mu, mean = 10, sd = 3)
+prior1_sigma <- dnorm(grid_params$sigma, mean = 4.5, sd = 1)
+prior1 <- prior1_mu * prior1_sigma
+
+# Prior 2 (débil): mu ~ N(20, 0.1), sigma ~ Uniforme(0.5, 6)
+prior2_mu <- dnorm(grid_params$mu, mean = 20, sd = 0.1)
+prior2_sigma <- dunif(grid_params$sigma, min = 0.5, max = 6)
+prior2 <- prior2_mu * prior2_sigma
+```
+
+```{r}
+# Parte 4 
+
+# Función para calcular log-verosimilitud
+calcular_log_likelihood <- function(datos, mu, sigma) {
+  # Para cada combinación de mu y sigma -> calcular la log-verosimilitud
+  # sum(log(dnorm(x, mu, sigma))) para todos los datos
+  ll <- sapply(1:length(mu), function(i) {
+    sum(dnorm(datos, mean = mu[i], sd = sigma[i], log = TRUE))
+  })
+  return(ll)
+}
+
+log_likelihood <- calcular_log_likelihood(G3, grid_params$mu, grid_params$sigma)
+
+# Log-posterior = log-likelihood + log-prior
+log_prior1 <- log(prior1 + 1e-10)  # Evitar log(0)
+log_prior2 <- log(prior2 + 1e-10)
+
+log_posterior1 <- log_likelihood + log_prior1
+log_posterior2 <- log_likelihood + log_prior2
+
+# Normalizar posteriores
+posterior1 <- exp(log_posterior1 - max(log_posterior1))
+posterior1 <- posterior1 / sum(posterior1)
+
+posterior2 <- exp(log_posterior2 - max(log_posterior2))
+posterior2 <- posterior2 / sum(posterior2)
+
+# Agregar posteriores al grid
+grid_params$posterior1 <- posterior1
+grid_params$posterior2 <- posterior2
+```
+
+```{r}
+# Parte 5
+
+# Restringir a mu ∈ [9, 11] y sigma ∈ [4, 5]
+grid_restringido <- grid_params %>%
+  filter(mu >= 9 & mu <= 11 & sigma >= 4 & sigma <= 5)
+
+# Gráfico Prior 1
+p1 <- ggplot(grid_restringido, aes(x = mu, y = sigma, fill = posterior1)) +
+  geom_tile() +
+  scale_fill_viridis_c(option = "plasma") +
+  labs(title = "Posterior Conjunta - Prior 1 (Informativo)",
+       subtitle = "μ ~ N(10, 3), σ ~ N(4.5, 1)",
+       x = "μ (Media)",
+       y = "σ (Desviación estándar)",
+       fill = "Densidad\nPosterior") +
+  theme_minimal() +
+  theme(plot.title = element_text(face = "bold"))
+
+# Gráfico Prior 2
+p2 <- ggplot(grid_restringido, aes(x = mu, y = sigma, fill = posterior2)) +
+  geom_tile() +
+  scale_fill_viridis_c(option = "plasma") +
+  labs(title = "Posterior Conjunta - Prior 2 (Débil)",
+       subtitle = "μ ~ N(20, 0.1), σ ~ Uniforme(0.5, 6)",
+       x = "μ (Media)",
+       y = "σ (Desviación estándar)",
+       fill = "Densidad\nPosterior") +
+  theme_minimal() +
+  theme(plot.title = element_text(face = "bold"))
+
+grid.arrange(p1, p2, ncol = 2)
+
+# Encontrar máximos de cada posterior (MAP - Maximum A Posteriori)
+map1_idx <- which.max(grid_params$posterior1)
+map2_idx <- which.max(grid_params$posterior2)
+
+cat("- Máximos A Posteriori (MAP) \n")
+cat("Prior 1 - μ:", grid_params$mu[map1_idx], "| σ:", grid_params$sigma[map1_idx], "\n")
+cat("Prior 2 - μ:", grid_params$mu[map2_idx], "| σ:", grid_params$sigma[map2_idx], "\n")
+```
+
+
+
+RESPUESTA:
+5.1
+- Para el **Prior 1 (informativo):** $\mu \sim N(10,3)$, $\sigma \sim N(4.5,1)$ la masa del posterior se concentra para $\mu \in [10.0, 10.5]$ con $sd \in [4.30, 4.75]$.
+    
+- Para el **Prior 2 (débil):** $\mu \sim N(20,0.1)$, $\sigma \sim \text{Uniforme}(0.5,6)$ la masa del posterior se concentra también en $\mu \in [10.0, 10.5]$ con $sd \in [4.30, 4.75]$.
+
+- En particular, tenemos que se obtuvo que los Máximos A Posteriori (MAP) para el prior 1 y 2 coincideron en $\mu = 10.40882$ y $\sigma = 4.57$
+
+5.2
+   - No existe una diferencia entre ambos priors, esto ocurre ya que se tiene un conjunto de datos lo suficientemente grande ($n=395$) para generar que la verosimilitud domine por sobre los priors usados, provocando que la posterior converja al mismo valor independientemente del prior (a excepción de que fuera mucho más restrictivo). En particular, la debilidad (conocimientro previo no tan acertado) para el prior 2 podría ser más observable con una menor cantidad de datos ya que aquí la posición inicial de la Media $\mu=20$ con $sd=0.1$ estaría más lejos del valor real obtenido en la parte 1 ($\mu=10.41$) y la verosimilitud aun no predominaria en la distribución del posterior. 
+   
+Es decir, con menos datos (o una verosimilitud no predominante) se habría observado que:
+
+- Para el Prior 1 (Informativo) la masa posterior se concentraria alrededor de los valores que combinan el prior con los datos, y como el prior está centrado cerca de la media empírica, la       posterior también debería estar bien centrada.
+
+- Para el Prior 2 (Débil) se tiene que el prior está centrado en 20 con sd = 0.1, lejano a la media empirica, y por tanto la distribución posterior estaría mal centrada.
+
+
+```{r}
+# Parte 6
+n_samples <- 10000
+
+# Muestrear índices según la probabilidad posterior
+sample_idx1 <- sample(1:nrow(grid_params), size = n_samples, 
+                      replace = TRUE, prob = grid_params$posterior1)
+sample_idx2 <- sample(1:nrow(grid_params), size = n_samples, 
+                      replace = TRUE, prob = grid_params$posterior2)
+
+# Extraer muestras
+muestras1 <- data.frame(
+  mu = grid_params$mu[sample_idx1],
+  sigma = grid_params$sigma[sample_idx1],
+  prior = "Prior 1 (Informativo)"
+)
+
+muestras2 <- data.frame(
+  mu = grid_params$mu[sample_idx2],
+  sigma = grid_params$sigma[sample_idx2],
+  prior = "Prior 2 (Débil)"
+)
+
+muestras_todas <- bind_rows(muestras1, muestras2)
+
+# Densidades marginales de mu
+p_mu <- ggplot(muestras_todas, aes(x = mu, fill = prior, color = prior)) +
+  geom_density(alpha = 0.4, linewidth = 1) +
+  geom_vline(xintercept = mean(G3), linetype = "dashed", 
+             color = "black", linewidth = 1) +
+  labs(title = "Densidad Marginal Posterior de μ",
+       x = "μ (Media)",
+       y = "Densidad",
+       fill = "Prior",
+       color = "Prior") +
+  annotate("text", x = mean(G3), y = 0, 
+           label = paste0("Media empírica: ", round(mean(G3), 2)),
+           hjust = -0.1, vjust = -1) +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+
+# Densidades marginales de xc
+p_sigma <- ggplot(muestras_todas, aes(x = sigma, fill = prior, color = prior)) +
+  geom_density(alpha = 0.4, linewidth = 1) +
+  geom_vline(xintercept = sd(G3), linetype = "dashed", 
+             color = "black", linewidth = 1) +
+  labs(title = "Densidad Marginal Posterior de σ",
+       x = "σ (Desviación estándar)",
+       y = "Densidad",
+       fill = "Prior",
+       color = "Prior") +
+  annotate("text", x = sd(G3), y = 0, 
+           label = paste0("SD empírica: ", round(sd(G3), 2)),
+           hjust = -0.1, vjust = -1) +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+
+grid.arrange(p_mu, p_sigma, ncol = 2)
+
+# Estadísticas de las muestras
+cat("\n- Estadísticas de las muestras posteriores\n")
+cat("Prior 1 - Media de μ:", mean(muestras1$mu), "| SD:", sd(muestras1$mu), "\n")
+cat("Prior 1 - Media de σ:", mean(muestras1$sigma), "| SD:", sd(muestras1$sigma), "\n")
+cat("Prior 2 - Media de μ:", mean(muestras2$mu), "| SD:", sd(muestras2$mu), "\n")
+cat("Prior 2 - Media de σ:", mean(muestras2$sigma), "| SD:", sd(muestras2$sigma), "\n")
+```
+
+
+
+
+
+
+
+RESPUESTA:
+
+Para un muestro de 10.000 valores tenemos que los priors 1 y 2 no generan diferencias notorias en la media o dispersión. En particular, se obtuvo que el Prior 1 tuvo una $\mu=10.41$ al igual que el Prior 2, mientras que en $\sigma$ el Prior 1 obtuvo $4.58$ y el Prior 2 $4.59$. En base a esto se puede ver que el Prior 1 es levemente más certero que el Prior 2, sin embargo no es una diferencia notoria, indicando así que ambos priors convergen al mismo valor posterior par a$\mu$ y \sigma$.
+
+Respecto a las densidades marginales del gráfico si es posible observar que el Prior 1 (informativo) tiene una mayor concentración que el Prior 2 en la media empirica, sin embargo lo que destaca es que para una mayor cantidad de datos el Prior 2 que es debíl es capaz de llegar al mismo posterior que si se usa un Prior informativo gracias a la verosimilitud. 
+
+
+
+
+```{r}
+# Parte 7
+cat("- Intervalos HPDI 95%\n\n")
+
+# Prior 1
+hpdi1_mu <- HPDI(muestras1$mu, prob = 0.95)
+hpdi1_sigma <- HPDI(muestras1$sigma, prob = 0.95)
+
+cat("Prior 1 (Informativo):\n")
+cat("  μ: [", round(hpdi1_mu[1], 3), ",", round(hpdi1_mu[2], 3), "]\n")
+cat("  σ: [", round(hpdi1_sigma[1], 3), ",", round(hpdi1_sigma[2], 3), "]\n\n")
+
+# Prior 2
+hpdi2_mu <- HPDI(muestras2$mu, prob = 0.95)
+hpdi2_sigma <- HPDI(muestras2$sigma, prob = 0.95)
+
+cat("Prior 2 (Débil):\n")
+cat("  μ: [", round(hpdi2_mu[1], 3), ",", round(hpdi2_mu[2], 3), "]\n")
+cat("  σ: [", round(hpdi2_sigma[1], 3), ",", round(hpdi2_sigma[2], 3), "]\n\n")
+
+# Comparar anchuras
+cat("Anchuras de intervalos:\n")
+cat("Prior 1 - μ:", round(hpdi1_mu[2] - hpdi1_mu[1], 3), 
+    "| σ:", round(hpdi1_sigma[2] - hpdi1_sigma[1], 3), "\n")
+cat("Prior 2 - μ:", round(hpdi2_mu[2] - hpdi2_mu[1], 3), 
+    "| σ:", round(hpdi2_sigma[2] - hpdi2_sigma[1], 3), "\n")
+```
+
+
+RESPUESTA:
+
+Al calcular los intervalos HDPI 05\% podemos observar que para el Prior 1 se obtuvo $\mu$: $[9.976, 10.842]$ mientras que para el Prior 2 se obtuvo $\mu$: $[9.928, 10.842]$, es decir, el Prior 1 tiene una anchura de parámetro ligeramente menor. Esto significa que el Prior 1  es ligeramente más preciso (menor incertidumbre) en la estimación de $\mu$.
+
+Por otro lado, se puede observar que se obtuvieron $\sigma$: [4.27, 4.898] para el Prior 1 y $\sigma$: [4.27, 4.909] para el Prior 2, es decir, el Prior 1 tiene una desviación estándar ligeramente menor. Esto significa que el Prior 1 aporta más información con respecto al Prior 2, lo que reduce la incertidumbre (aunque esto se vea mermado por la verosimilitud explicada en las partes anteriores).
+
+
+------------------------------------------------------------------------
+
+### Pregunta 3: Estimación **bayesiana de la tasa de reclamos diarios (Poisson)**
+
+Una compañía de seguros desea estimar la tasa promedio diaria de reclamos por accidentes, asumiendo que el número de reclamos $Y_i$ sigue una distribución Poisson con parámetro $\lambda$.
+
+**Se pide:**
+
+1.  **Simule** 1000 días de datos $Y_i \sim \text{Poisson}(8)$ y grafique el histograma.
+
+2.  Considere dos priors para $\lambda$:
+
+    -   Prior A: $\lambda \sim \text{Gamma}(1,1)$
+    -   Prior B: $\lambda \sim \text{Gamma}(32,4)$
+
+3.  **Visualice y programe manualmente la actualización secuencial del posterior conjugado.** Trabaje con el **Prior A = Gamma(1,1)** y construya una **función propia** que reciba como entrada el número de observaciones utilizadas para los valores 1, 5, 10, 30 y 100 días y actualice los parámetros de la distribución posterior según las fórmulas de conjugación:
+
+    $$
+    \begin{aligned}
+    \alpha_{\text{posterior}} &= \alpha_{\text{prior}} + \sum_{i=1}^n y_i, \\
+    \beta_{\text{posterior}}  &= \beta_{\text{prior}} + n
+    \end{aligned}
+    $$
+
+    Luego, con estos valores, calcule y grafique las densidades de las distribuciones **Gamma(**$\alpha_{\text{posterior}}, \beta_{\text{posterior}}$) para distintos tamaños de muestra $n$.
+
+    -   ¿Cómo cambia la forma del posterior a medida que se incorporan más observaciones?
+    -   ¿En qué momento la distribución comienza a concentrarse cerca de la tasa real $\lambda = 8$?
+
+    Se espera que implemente esta actualización **a mano** (con una función o un bloque de código propio), sin depender de funciones automáticas de actualización, para visualizar de forma explícita cómo la evidencia modifica la creencia inicial.
+
+4.  Muestree 10.000 valores desde cada posterior (calculado con las 1000 observaciones) y construya un **resumen numérico** con:
+
+    -   Media posterior de $\lambda$
+    -   Intervalo HPDI 95%
+
+5.  Grafique las **densidades posteriores** de $\lambda$ (ambos priors calculados con 1000 observaciones) y marque con una línea vertical $\lambda = 8$.
+
+    -   ¿Cuál prior genera una posterior más concentrada?
+
+6.  Comente los resultados:
+
+    -   ¿Ambos priors llevan a conclusiones similares sobre $\lambda$?
+    -   ¿La posterior recupera correctamente el valor real $\lambda=8$?
+
+**Respuesta:**
+
+```{r}
+# Parte 1
+set.seed(26)  
+lambda_real <- 8
+n_dias <- 1000
+reclamos <- rpois(n_dias, lambda = lambda_real)
+
+cat("- Estadísticas de los datos simulados \n")
+cat("Lambda real:", lambda_real, "\n")
+cat("Media muestral:", mean(reclamos), "\n")
+cat("Varianza muestral:", var(reclamos), "\n")
+cat("Min:", min(reclamos), "| Max:", max(reclamos), "\n\n")
+
+# Histograma de los datos
+ggplot(data.frame(reclamos = reclamos), aes(x = reclamos)) +
+  geom_histogram(aes(y = after_stat(density)), bins = 20, 
+                 fill = "skyblue", color = "black", alpha = 0.7) +
+  geom_vline(xintercept = lambda_real, color = "red", 
+             linetype = "dashed", linewidth = 1.2) +
+  geom_vline(xintercept = mean(reclamos), color = "blue", 
+             linetype = "dotted", linewidth = 1.2) +
+  labs(title = "Histograma de Reclamos Diarios Simulados",
+       subtitle = paste0("λ real = ", lambda_real, 
+                        " | Media muestral = ", round(mean(reclamos), 2)),
+       x = "Número de reclamos",
+       y = "Densidad") +
+  theme_minimal()
+```
+
+RESPUESTA:
+A partir del gráfico se puede observar la distribución de poisson para el número de reclamos y que la media muestral de los datos simulados es casi identica al parámetro $\lambda$.
+
+
+```{r}
+# Parte 2
+# Prior A: Gamma(1, 1) - Prior débil/no informativo
+alpha_A <- 1
+beta_A <- 1
+
+# Prior B: Gamma(32, 4) - Prior informativo
+# Media = alpha/beta = 32/4 = 8, cerca del valor real
+alpha_B <- 32
+beta_B <- 4
+```
+
+
+```{r}
+# Parte 3
+# Actualización secuencial del posterior 
+# Función para actualizar parámetros de Gamma según conjugación Poisson-Gamma
+actualizar_gamma_posterior <- function(alpha_prior, beta_prior, datos, n_obs) {
+  # solo usamos las primeras n_obs observaciones
+  datos_usados <- datos[1:n_obs]
+  
+  # alpha_posterior = alpha_prior + sum(y_i)
+  # beta_posterior = beta_prior + n
+  alpha_post <- alpha_prior + sum(datos_usados)
+  beta_post <- beta_prior + n_obs
+  
+  return(list(
+    alpha = alpha_post,
+    beta = beta_post,
+    n = n_obs,
+    media = alpha_post / beta_post,
+    varianza = alpha_post / beta_post^2
+  ))
+}
+
+# Tamaños de muestra a evaluar
+tamanos <- c(1, 5, 10, 30, 100)
+
+# Almacenar resultados
+resultados_secuenciales <- data.frame()
+
+for (n in tamanos) {
+  # Actualizar posterior con Prior A
+  posterior <- actualizar_gamma_posterior(alpha_A, beta_A, reclamos, n)
+  
+  cat("n =", n, "días:\n")
+  cat("  Alpha posterior:", posterior$alpha, "\n")
+  cat("  Beta posterior:", posterior$beta, "\n")
+  cat("  Media posterior λ:", round(posterior$media, 3), "\n")
+  cat("  SD posterior:", round(sqrt(posterior$varianza), 3), "\n\n")
+  
+  # Generar densidades para graficar
+  lambda_vals <- seq(0, 20, length.out = 1000)
+  densidad <- dgamma(lambda_vals, shape = posterior$alpha, rate = posterior$beta)
+  
+  temp_df <- data.frame(
+    lambda = lambda_vals,
+    densidad = densidad,
+    n_obs = paste0("n = ", n, " días"),
+    n_value = n
+  )
+  
+  resultados_secuenciales <- bind_rows(resultados_secuenciales, temp_df)
+}
+
+# Agregar el prior para comparación
+lambda_vals <- seq(0, 20, length.out = 1000)
+densidad_prior <- dgamma(lambda_vals, shape = alpha_A, rate = beta_A)
+prior_df <- data.frame(
+  lambda = lambda_vals,
+  densidad = densidad_prior,
+  n_obs = "Prior: n = 0",
+  n_value = 0
+)
+
+resultados_secuenciales <- bind_rows(prior_df, resultados_secuenciales)
+
+# Convertir a factor ordenado
+resultados_secuenciales$n_obs <- factor(resultados_secuenciales$n_obs,levels = c("Prior: n = 0", paste0("n = ", tamanos, " días")))
+
+# Graficar evolución del posterior
+ggplot(resultados_secuenciales, aes(x = lambda, y = densidad, color = n_obs)) +
+  geom_line(linewidth = 1.2) +
+  geom_vline(xintercept = lambda_real, linetype = "dashed", 
+             color = "red", linewidth = 1) +
+  scale_color_viridis_d(option = "plasma") +
+  labs(title = "Actualización Secuencial del Posterior (Prior A: Gamma(1,1))",
+       subtitle = "A medida que se incorporan más observaciones",
+       x = "λ (Tasa de reclamos)",
+       y = "Densidad",
+       color = "Observaciones") +
+  annotate("text", x = lambda_real, y = 0, 
+           label = paste0("λ real = ", lambda_real),
+           hjust = -0.1, vjust = -1, color = "red") +
+  theme_minimal() +
+  theme(legend.position = "right")
+```
+
+
+
+
+
+
+
+RESPUESTA:
+
+3.1
+A medida que se incorporan más observaciones podemos observar que la forma del posterior se ajuste mejor al $\lambda$ real, En particular podemos ver que mientras aumenta el n más preciso se vuelve la distribución a posterior (debido a la verosimilitud), y que entre $n=30$ y $n=100$ el mayo cambia es en la desviación estándar es menor (posterior más concentrada en el $\lambda$ real.)
+
+Esto  se puede observar en los resultados explicitos obtenidos:
+La medio se aproxima cada vez más al $\lambda$.
+n = 1: λ = 2.000 
+n = 5: λ = 6.167 
+n = 10: λ = 7.364
+n = 30: λ = 8.032 
+n = 100: λ = 8.198 
+
+La desviación estándar disminuye cada vez más también 
+n = 1: SD = 1.000 
+n = 5: SD = 1.014
+n = 10: SD = 0.818 
+n = 30: SD = 0.509 
+n = 100: SD = 0.285
+
+Un $\lambda$ más cercano al real implica que la distribución estará mejor posicionada/centrada, y como la desviación estándar es menor, implica que la distribución a posterior tiene una mayor densidad (más concentrada)
+
+3.2
+
+La media posterior se comienza a acercar a la tasa real desde $n=10$ con $\lambda=7.364$, en donde aunque aun hay una diferencia respecto a la tasa real, se puede observar desde el gráfico (y considerando también la desviación estándar) que ya se acerca a la tasa real. Desde $n=10$ ya se puede observar del gráfico una concentración mucho más exacta a la tasa real.
+
+Por otro lado, para $n$ menores ($n=1$ o $n=5$ el posterior está fuertemente influenciado por el prior, y por tanto la media se aleja de la tasa real.
+
+
+
+```{r}
+# Parte 4
+# Prior A
+posterior_A <- actualizar_gamma_posterior(alpha_A, beta_A, reclamos, n_dias)
+muestras_A <- rgamma(10000, shape = posterior_A$alpha, rate = posterior_A$beta)
+
+# Prior B
+posterior_B <- actualizar_gamma_posterior(alpha_B, beta_B, reclamos, n_dias)
+muestras_B <- rgamma(10000, shape = posterior_B$alpha, rate = posterior_B$beta)
+
+# Resumen numérico
+cat("\n - Resumen numerico \n")
+
+cat("Prior A: Gamma(1, 1)\n")
+cat("  Parámetros posteriores: Alpha =", posterior_A$alpha, "| Beta =", posterior_A$beta, "\n")
+cat("  Media posterior λ:", round(mean(muestras_A), 4), "\n")
+cat("  SD posterior:", round(sd(muestras_A), 4), "\n")
+
+hpdi_A <- HPDI(muestras_A, prob = 0.95)
+cat("  HPDI 95%: [", round(hpdi_A[1], 4), ",", round(hpdi_A[2], 4), "]\n\n")
+
+cat("Prior B: Gamma(32, 4)\n")
+cat("  Parámetros posteriores: Alpha =", posterior_B$alpha, "| Beta =", posterior_B$beta, "\n")
+cat("  Media posterior λ:", round(mean(muestras_B), 4), "\n")
+cat("  SD posterior:", round(sd(muestras_B), 4), "\n")
+
+hpdi_B <- HPDI(muestras_B, prob = 0.95)
+cat("  HPDI 95%: [", round(hpdi_B[1], 4), ",", round(hpdi_B[2], 4), "]\n\n")
+```
+
+
+RESPUESTA:
+
+Se puede observar de los resultados que ambos priors producentes estimaciones casi identicas del parámetro $\lambda$. (8.0009 y 8.007 para pior A y B).
+Es decir, ambas estimaciones generadas por los priors son precisas en cuanto respecto al valor real 8, lo que muestra como las posteriores convergieron al parámetro verdadero.
+
+Se puede observar también que los intervalos HPDI 95\% también son muy similares: Prior A $\rightarrow$ [7.8226, 8.1715] y Prior B $\rightarrow$ [7.8237, 8.171]
+Es decir, existe un 95\% de probabilidad de que el verdadero valor de $\lambda$ (tasa promedio de reclamos diarios) se encuentre en el intervalo [7.82, 8.17]
+    
+    
+
+
+
+```{r}
+# Parte 5
+
+# Graficar densidades posteriores finales
+muestras_todas <- data.frame(
+  lambda = c(muestras_A, muestras_B),
+  prior = rep(c("Prior A: Gamma(1,1)", "Prior B: Gamma(32,4)"), 
+              each = 10000)
+)
+
+ggplot(muestras_todas, aes(x = lambda, fill = prior, color = prior)) +
+  geom_density(alpha = 0.4, linewidth = 1.2) +
+  geom_vline(xintercept = lambda_real, linetype = "dashed", 
+             color = "red", linewidth = 1.5) +
+  scale_fill_manual(values = c("skyblue", "orange")) +
+  scale_color_manual(values = c("blue", "darkorange")) +
+  labs(title = "Densidades Posteriores de λ (n = 1000 observaciones)",
+       subtitle = "Comparación de dos priors diferentes",
+       x = "λ (Tasa de reclamos diarios)",
+       y = "Densidad",
+       fill = "Prior",
+       color = "Prior") +
+  annotate("text", x = lambda_real, y = 0, 
+           label = paste0("λ real = ", lambda_real),
+           hjust = -0.1, vjust = -1, color = "red", size = 4) +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+```
+
+
+
+
+RESPUESTAS:
+
+5.  Grafique las **densidades posteriores** de $\lambda$ (ambos priors calculados con 1000 observaciones) y marque con una línea vertical $\lambda = 8$.
+
+El prior B genera una posterior más concentrada, que al realizar los calculos, podemos ver que es cierto puesto que tiene una anchura del HPDI de 0.3472 mientras que el prior A obtuvo una anchura de 0.3488. Además, esto es coherente con la Gamma usada, en donde el parámetro $\alpha$ controla la cantidad de información, en el prior B este es de 32, mientras que en A es de solo 1, al tener mayor $\alpha$ tendrá mayor información y menor varianza, lo que implica una distribución más concentrada.
+
+
+6.1 
+
+A partir de los resultados se puede concluir que efectivamente ambos priors llevan a conclusiones similares sobre $\lambda$, en donde se aproximan al valor verdadero.
+
+6.2
+
+La posterior de ambos priors si logra recuperar correctamente el valor verdadero del parámetro $\lambda = 8$, en particular los resultados mostraron que se obtuvo que el Prior A da una media de 8.0009, mientras que el prior de B 8.007, con intervalos HPDI 95\% donde ambos contienen $\lambda=8$
+
+
+
+------------------------------------------------------------------------
+
+### Pregunta 4: Regresión Lineal Bayesiana
+
+En esta pregunta aplicará un modelo de **regresión lineal bayesiana** para estudiar la relación entre el **monto total de la cuenta (`total_bill`)** y la **propina entregada (`tip`)** utilizando el dataset [`tips`](https://raw.githubusercontent.com/mwaskom/seaborn-data/master/tips.csv).\
+El objetivo es comparar el enfoque bayesiano con el modelo lineal clásico y analizar la credibilidad de las predicciones obtenidas.
+
+Se considerará el siguiente modelo:
+
+$$
+\begin{aligned}
+TIP_i &\sim \text{Normal}(\mu_i, \sigma) \\
+\mu_i &= \alpha + \beta \cdot total\_bill_i
+\end{aligned}
+$$
+
+donde:
+
+\- $\alpha$ representa la propina base promedio cuando la cuenta es cero,\
+- $\beta$ indica el cambio esperado en la propina por cada dólar adicional en la cuenta,\
+- $\sigma$ mide la variabilidad de las propinas no explicada por el modelo.
+
+------------------------------------------------------------------------
+
+#### **Instrucciones**
+
+1.  Cargue el dataset `tips.csv` directamente desde el enlace provisto
+2.  Defina priors razonables para los parámetros: $$
+    \alpha \quad
+    \beta  \quad
+    \sigma 
+    $$ Justifique brevemente su elección.
+3.  Ajuste el modelo mediante el método de **aproximación de Laplace**, utilizando la función `quap()` de la librería `rethinking`.
+4.  Obtenga los valores estimados y los intervalos de credibilidad al 95% para los parámetros, interpretando especialmente el signo y magnitud de $\beta$.
+5.  Grafique la línea MAP de regresión obtenida, añadiendo el **intervalo de credibilidad del 95%** para la media y para las predicciones futuras.
+6.  Interprete el gráfico y discuta si la relación entre `total_bill` y `tip` es fuerte, débil o incierta según la distribución posterior.
+
+**Respuesta:**
+
+```{r}
+# Parte 1
+tips <- read.csv("https://raw.githubusercontent.com/mwaskom/seaborn-data/master/tips.csv")
+```
+
+```{r}
+cat("- Estructura del dataset \n")
+str(tips)
+cat("\n- Primeras filas \n")
+head(tips)
+
+# Correlación
+correlacion <- cor(tips$total_bill, tips$tip)
+cat("Correlación:", round(correlacion, 3), "\n\n")
+
+cat("\n- Estadísticas descriptivas \n")
+cat("Total bill - Media:", round(mean(tips$total_bill), 2), "| SD:", round(sd(tips$total_bill), 2), "\n")
+cat("Tip - Media:", round(mean(tips$tip), 2), "| SD:", round(sd(tips$tip), 2), "\n")
+cat("N observaciones:", nrow(tips), "\n\n")
+```
+
+```{r}
+# Parte 2
+cat(" - Media de propinas: $", round(mean(tips$tip), 2), "\n")
+cat(" - Media total de las cuentas: $", round(mean(tips$total_bill), 2), "\n")
+cat(" - SD de propinas: $", round(sd(tips$tip), 2), "\n")
+```
+
+RESPUESTA:
+
+De los datos podemos observar que la media de las propinas suele ser de \$3 (con una desviación estándar de \$1.38), mientras que el total de la cuenta de \$20, esto significa que una propina suele ser entre el 10\% y el 15\% del total de la cuenta.
+
+Las definiciones de los priors a usar son las siguientes:
+$\alpha \sim N(0,10)$ La propina base cuando la cuenta es 0 (intercepto), es un prior debil centrado en 0, con una gran desviación estándar que permitirá un amplio rango y un gran volumen de datos predomine (mediante la verosimilitud) sobre el prior en caso de que sea errado. 
+
+$\beta \sim N(0.15, 0.5)$ Es el aumento de la propina por dolar adicional en la cuenta (pendiente), en general por cultura la propina suele ser de entre el 10\% y el 15\%, mediante un análisis descriptivo rápido esto también se confirma que se aplica para este conjunto de datos, sugiriendo así $\beta=0.15$, la sd=0.5 implicará que el prior también sea debil y tenga alta incertidumbre, y que por tanto no predomine sobre un conjunto grande de datos.
+
+$\sigma \sim exp(1)$ representa la varianzabilidad no explicada por el modelo, que esta sea exp(1) garantiza un $\sigma>0$ y media 1, lo que en propinas se traduce a que $\sigma$ este en el rango de \$1-2.
+
+Estos priors aunque introducen un conocimiento general/cultural aceptable son debilmente informativos justamente para que los datos dominen la inferencia posterior.
+
+
+
+
+
+
+```{r}
+# Parte 3
+
+# Modelo 
+modelo_tips <- quap(
+  alist(
+    tip ~ dnorm(mu, sigma),
+    mu <- alpha + beta * total_bill,
+    alpha ~ dnorm(0, 10), 
+    beta ~ dnorm(0.15, 0.5),
+    sigma ~ dexp(1)
+  ),
+  data = tips
+)
+
+cat("=== RESULTADOS DEL MODELO ===\n\n")
+precis(modelo_tips, prob = 0.95)
+```
+
+
+
+
+
+```{r}
+# Parte 4
+# tabla de precis
+params <- precis(modelo_tips, prob = 0.95)
+
+cat("\n--- contenido de params (precis) ---\n")
+print(params)
+cat("\nColumnas detectadas:\n")
+print(colnames(params))
+
+# columna 'mean' 
+mean_col <- which(tolower(colnames(params)) %in% c("mean", "mean."))
+
+#  columnas  percentiles
+pct_cols <- grep("%", colnames(params), fixed = TRUE)
+# Esto lo agregue ya que me daba error al extraer de otras formas los parametros desde precis, incluso me dio un IC incorrecto inicialmente
+# si no hay columnas con % usar columnas 2 y 3 como fallback
+if(length(pct_cols) >= 2) {
+  lower_col <- pct_cols[1]
+  upper_col <- pct_cols[2]
+} else {
+  # fallback por posición
+  lower_col <- 2
+  upper_col <- 3
+}
+
+# valores
+alpha_mean <- as.numeric(params["alpha", mean_col])
+beta_mean  <- as.numeric(params["beta",  mean_col])
+sigma_mean <- as.numeric(params["sigma", mean_col])
+
+alpha_ci <- as.numeric(params["alpha", c(lower_col, upper_col)])
+beta_ci  <- as.numeric(params["beta",  c(lower_col, upper_col)])
+sigma_ci <- as.numeric(params["sigma", c(lower_col, upper_col)])
+
+cat("\n=== Valores extraídos ===\n")
+cat("alpha mean:", alpha_mean, " alpha CI: [", alpha_ci[1], ",", alpha_ci[2], "]\n")
+cat("beta  mean:", beta_mean,  " beta  CI: [", beta_ci[1],  ",", beta_ci[2], "]\n")
+cat("sigma mean:", sigma_mean," sigma CI: [", sigma_ci[1], ",", sigma_ci[2], "]\n")
+
+# obtener el MAP 
+map_est <- tryCatch(
+  coef(modelo_tips),
+  error = function(e) NULL
+)
+cat("\nMAP: \n")
+print(map_est)
+```
+RESPUESTA:
+
+Para $\alpha$ se obtuvo una estimación MAP de 0.92, es decir, cuando la cuenta es 0 ya hay una propina base de \$0.92. Este parámetro no tiene sentido en la vida real pues una cuenta sin gastos no dejaría propina, pero sirve como la base (intercepto) para las predicciones donde si hay un consumo y por ende el total de la cuenta es mayor a 0. Su CI en el que con un 95\% de probabilidad se encontrará este valor es de [0.61, 1.23]
+
+Para $\beta$ se obtuvo una estimación MAP de 0.105, es decir, por cada dolar adicional en la cuenta, la propina aumenta en \$0.105. El signo $\beta>0$ indica una relación positiva entre el monto de la cuenta y la propina, lo cual tiene sentido pues a mayor cuenta, mayor suele ser la propina ya que es un \% de esta (usualmente). Su intervalo CI en el que se encontrará con un 95\% de probabilidad es [0.09, 0.11]
+
+Para $\sigma$ se obtuvo una estimación MAP de 1.0157, es decir, la variabilidad de las propinas que no es explicada por el modelo. Esto significa que las propinas individuales varian alrededor de +/-\$1.02 alrededor de la pendiente predicha. Este valor también puede indicar que hay otros factores no capturados por el modelo. Su intervalo en el que se encontrara con un 95\% de probabilidad es [0.92, 1.1]
+
+
+```{r}
+# Parte 5
+
+# Generar predicciones
+total_bill_seq <- seq(min(tips$total_bill), max(tips$total_bill), length.out = 100)
+
+# Extraer muestras de la posterior
+post_samples <- extract.samples(modelo_tips, n = 10000)
+
+# Calcular mu (media) para cada valor de total_bill y cada muestra
+mu_matrix <- sapply(total_bill_seq, function(x) {
+  post_samples$alpha + post_samples$beta * x
+})
+
+# Intervalo de credibilidad para la media
+mu_mean <- apply(mu_matrix, 2, mean)
+mu_ci <- apply(mu_matrix, 2, PI, prob = 0.95)
+
+# Intervalo de credibilidad para pred futuras
+pred_matrix <- sapply(total_bill_seq, function(x) {
+  mu <- post_samples$alpha + post_samples$beta * x
+  rnorm(length(mu), mean = mu, sd = post_samples$sigma)
+})
+
+pred_ci <- apply(pred_matrix, 2, PI, prob = 0.95)
+
+# dataframe para graficar
+df_predicciones <- data.frame(
+  total_bill = total_bill_seq,
+  mu_mean = mu_mean,
+  mu_lower = mu_ci[1, ],
+  mu_upper = mu_ci[2, ],
+  pred_lower = pred_ci[1, ],
+  pred_upper = pred_ci[2, ]
+)
+
+# Gráfico 
+ggplot() +
+  # Intervalo de predicción
+  geom_ribbon(data = df_predicciones, 
+              aes(x = total_bill, ymin = pred_lower, ymax = pred_upper, 
+                  fill = "IC 95% Predicción"), 
+              alpha = 0.25) +
+  # Intervalo de credibilidad para la media
+  geom_ribbon(data = df_predicciones, 
+              aes(x = total_bill, ymin = mu_lower, ymax = mu_upper, 
+                  fill = "IC 95% Media (μ)"), 
+              alpha = 0.45) +
+  # Línea MAP
+  geom_line(data = df_predicciones, 
+            aes(x = total_bill, y = mu_mean, color = "Línea MAP"),
+            linewidth = 1.2) +
+  # Datos observados
+  geom_point(data = tips, aes(x = total_bill, y = tip),
+             alpha = 0.5, color = "black", size = 1.5) +
+  
+  scale_fill_manual(values = c(
+    "IC 95% Predicción" = "lightblue",
+    "IC 95% Media (μ)" = "steelblue"
+  )) +
+  scale_color_manual(values = c(
+    "Línea MAP" = "darkblue"
+  )) +
+
+  labs(title = "Regresión Lineal Bayesiana: Propina vs Total de la Cuenta",
+       subtitle = paste0(
+         "β = ", round(beta_est, 3),
+         " | IC media = banda azul oscuro | IC predicción = banda azul claro"
+       ),
+       x = "Total de la cuenta ($)",
+       y = "Propina ($)",
+       fill = "Intervalos",
+       color = "Líneas") +
+  theme_minimal() +
+  theme(plot.title = element_text(face = "bold"))
+
+```
+
+```{r}
+cat("R^2 =", round(r2_bayes, 3))
+```
+RESPUESTA:
+
+6. 
+
+Del gráfico podemos observar $\alpha$ (intercepto) cuando el total de la cuenta es 0, indicando la propina mínima. Luego tenemos la pendiente representada por $\beta=0.105$ la cual indica  es que por cada dolar adicional en el total, la propina aumenta en \$0.105, y finalmente se puede apreciar $\sigma$ el cual indica que cantidad de la propina no está siendo explicada por el modelo (\$1.01).
+
+En particular se puede observar que hay una correlación moderada o incluso fuerte entre el total de la cuenta y la propina que se dejará, sin embargo esto también está dictaminado por el hecho de que una propina típicamente es el \% del total de la cuenta (10\% o 15\%), lo que explica el hecho de que haya un $\sigma$ que el modelo no está siendo capaz de explicar y que también hayan varios puntos separados de la pendiente. El intervalo de confianza calculado previamente para $\beta$ [ 0.09070121 , 0.1193864 ] también es relativamente estrecho, y la banda de predicción que se observa es bastante amplia, lo que refleja una alta variabilidad en las propinas. Esto se ratifica aún más al obtener el $R^2$ del modelo, que indica que se explica un 45,7\% de la variabilidad.
+
+Es en base a esto que se puede decir que si bien existe una correlación entre el total de la cuenta y la propina dejada, hay más factores influyentes en el monto de la propina que no están siendo considerados actualmente.
+
+
+<hr />
+
+<p style="text-align: center;">
+
+A work by <a href="https://github.com/dccuchile/CC6104">CC6104</a>
+
+</p>
+
+<!-- Add icon library -->
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.1/css/all.css">
+
+<!-- Add font awesome icons -->
+
+<p style="text-align: center;">
+
+<a href="https://github.com/dccuchile/CC6104"><i class="fab fa-github" style='font-size:30px'></i></a>
+
+</p>
+
+<p style="text-align: center;">
+
+<a href="https://discord.gg/XCbQvGs3Uf"><i class="fab fa-discord" style='font-size:30px'></i></a>
+
+</p>
+
+ 

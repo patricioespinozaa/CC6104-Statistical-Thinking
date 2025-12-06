@@ -1,0 +1,660 @@
+---
+title: "Tarea 2"
+output:
+  html_document:
+    df_print: paged
+---
+
+![](banner.png)
+
+<center>
+
+<h1>Tarea 2: Frequentist Inference</h1>
+
+</center>
+
+<center><strong>CC6104: Statistical Thinking</strong></center>
+
+#### **Integrantes :**
+
+-   Patricio Espinoza A.
+
+#### **Cuerpo Docente:**
+
+-   Profesor: Felipe Bravo M.
+-   Auxiliares: Matías Godoy
+-   Ayudantes: Scarleth Betancurt, Máximo Flores y Laura Maldonado
+
+#### **Fecha límite de entrega:**
+
+### **Índice:**
+
+1.  [Objetivo](#id1)
+2.  [Instrucciones](#id2)
+3.  [Referencias](#id3)
+4.  [Elaboración de Código](#id4)
+
+### **Objetivo**<a name="id1"></a>
+
+[Bienvenid\@s](mailto:Bienvenid@s){.email} a la segunda tarea del curso Statistical Thinking. Esta tarea tiene como objetivo evaluar los contenidos teóricos de la segunda parte del curso, los cuales se enfocan principalmente en inferencia estadística, diseño de experimentos y test de hipótesis. Si aún no han visto las clases, se recomienda visitar los enlaces de las referencias.
+
+### **Instrucciones:**<a name="id2"></a>
+
+-   La tarea se realiza en grupos de **máximo 2 personas**. Pero no existe problema si usted desea hacerla de forma individual.
+-   La entrega es a través de u-cursos a más tardar el día estipulado en la misma plataforma. A las tareas atrasadas se les descontará un punto por día.
+-   El formato de entrega es este mismo **Rmarkdown** y un **html** con la tarea desarrollada. Por favor compruebe que todas las celdas han sido ejecutadas en el archivo html.
+-   Al momento de la revisión tu código será ejecutado. Por favor verifica que tu entrega no tenga errores de compilación.
+-   No serán revisadas tareas desarrolladas en Python.
+-   Está **PROHIBIDO** la copia o compartir las respuestas entre integrantes de diferentes grupos.
+-   Pueden realizar consultas de la tarea a través de U-cursos y/o del canal de Discord del curso.
+
+### **Referencias:**<a name="id3"></a>
+
+Slides de las clases:
+
+-   [Introduction to Statistical Inference](https://github.com/dccuchile/CC6104/blob/master/slides/ST-inference.pdf)
+
+Enlaces a videos de las clases:
+
+-   Introduction to Statistical Inference: [video1](https://youtu.be/A0BAhO9_RSI) [video2](https://youtu.be/6Io555e2stM) [video3](https://youtu.be/2-Q2f6zmTns) [video4](https://youtu.be/Hp2A5EJoXbk) [video5](https://youtu.be/M0Ag4bww7Q0) [video6](https://youtu.be/K7khgecup3I) [video7](https://youtu.be/uZ126Lh3L-k) [video8](https://youtu.be/kHSPx99nJ7g)
+
+Documentación:
+
+-   [Boostrap en r](https://www.datacamp.com/community/tutorials/bootstrap-r)
+-   [ggplot2](https://ggplot2.tidyverse.org/)
+
+# Elaboración de Código<a name="id4"></a>
+
+En la siguiente sección deberá resolver cada uno de los experimentos computacionales a través de la programación en R. Para esto, se le aconseja que cree funciones en R, ya que le facilitará la ejecución de gran parte de lo solicitado.
+
+Para el desarrollo preste mucha atención en los enunciados, ya que se le solicitará la implementación de métodos sin uso de funciones predefinidas. Por otro lado, Las librerías permitidas para desarrollar de la tarea 2 son las siguientes:
+
+```{r, echo=FALSE, warning=FALSE}
+# Manipulación de estructuras
+library(rmarkdown)
+
+library(tidyverse)
+
+# Para realizar plots
+library(ggplot2)
+library(plotly)
+
+# Manipulación de varios plots en una imagen.
+library(gridExtra)
+
+# Para la P3
+library(gapminder)
+library(boot)
+```
+
+Elimine `eval=FALSE` para ejecutar las celdas.
+
+Para poder realizar un análisis sobre los resultados, es recomendable que utilice una semilla para que estos sean replicables:
+
+```{r}
+set.seed(43)
+```
+
+## Pregunta 1: Sesgo y consistencia de un estimador
+
+Un radar de tránsito mide la proporción de vehículos que exceden la velocidad permitida en una autopista. Se sabe que, en promedio, la probabilidad real de que un auto supere el límite es $p = 0.3$.\
+Un investigador propone un estimador alternativo que agrega un ruido gaussiano a la proporción muestral:\
+$$
+\hat{p}_{n,\sigma} = \bar{X}_n + \epsilon_\sigma, \quad \epsilon_\sigma \sim N(0,\sigma^2)
+$$\
+donde $\bar{X}_n$ proviene de una muestra de autos generada con distribución Binomial.
+
+Se pide:\
+1. Simular este estimador para una muestra de tamaño $n=100$ y distintos valores de $\sigma \in \{0, 0.5, 1, 2\}$.\
+2. Graficar las distribuciones de $\hat{p}_{n,\sigma}$ (con 1000 ejemplos de $\hat{p}_{n,\sigma}$) y compararlas con el valor real $p=0.3$.\
+3. Calcular el sesgo de cada estimador.\
+4. Discutir si los estimadores son teóricamente consistentes (¿Cómo se comportarían al aumentar n?).
+
+```{r}
+set.seed(43)
+n <- 100
+sigmas <- c(0, 0.5, 1, 2)
+R <- 1000
+resultados <- list()
+
+#Simulación
+for (i in 1:length(sigmas)){
+  estimadores <- numeric(R)
+  for (j in 1:R){
+    prop_muestral <- mean(rbinom(n, size=1, prob=p))
+    ruido <- rnorm(1, 0, sigmas[i])
+    estimadores[j] <- prop_muestral + ruido
+  }
+  resultados[[i]] <- estimadores
+}
+
+tabla_ses <- data.frame(
+  σ = sigmas,
+  sesgo = sapply(resultados, function(x)( mean(x) - p ))
+)
+print(tabla_ses)
+
+#Graficos simples
+for (l in 1:length(sigmas)) {
+  hist(resultados[[l]], 
+       main = paste("Distrib. de estimadores, σ =", sigmas[l]),
+       xlab = "Estimadores", 
+       ylab = "Frecuencia",
+       col = "skyblue",
+       xlim = c(-6,6),
+       breaks = 30)
+  abline(v = p, col = "red", lwd = 2) 
+}
+```
+
+
+4.  Mientras n aumenta, se puede notar más visualmente con los gráficos que la variación es mayor entre mayor es sigma. Teniendo en cuenta eso y que el ruido NO depende de n, ese aumento de variación se ve que termina siendo el mismo ruido añadido, entonces los estimadores dejan de ser consistentes.
+
+## Pregunta 2: Distribución muestral con datos de accidentes
+
+El dataset `USAccDeaths` contiene el número de muertes mensuales por accidentes de tránsito en Estados Unidos entre 1973 y 1978. Supondremos que el número de muertes sigue aproximadamente una distribución Poisson($\lambda$).
+
+Recordemos que, si los datos provienen de una Poisson, se sabe que la media muestral $\bar{X}$ es un estimador insesgado de $\lambda$.
+
+Se pide:
+
+1.  Visualizar los datos originales: hacer un histograma y un gráfico de línea de la serie temporal de muertes mensuales.
+2.  Estimar la media poblacional $\lambda$ usando los datos.
+3.  Generar 1000 medias muestrales de tamaño $n=30$ (muestreo con reemplazo).
+4.  Construir la distribución muestral de la media y compararla con la distribución normal teórica usando un histograma y una curva de densidad.
+5.  Comente sus resultados
+
+```{r}
+set.seed(43)
+data("USAccDeaths")
+muertes <- as.numeric(USAccDeaths)
+
+# 1. Visualización
+par(mfrow = c(1, 2), mar = c(4, 4, 3, 1))
+
+# Histograma
+hist(muertes, 
+     breaks = 15,
+     main = "Distribución de Muertes Mensuales",
+     xlab = "Número de Muertes en un mes",
+     ylab = "Frecuencia (meses con dichas muertes)",
+     col = "steelblue",
+     border = "white")
+
+# Serie temporal
+fechas <- seq(as.Date("1973-01-01"), by = "month", length.out = length(muertes))
+plot(fechas, muertes,
+     type = "o",  # línea con puntos
+     main = "Serie Temporal de Muertes (1973-1978)",
+     xlab = "Fecha",
+     ylab = "Número de Muertes",
+     col = "darkred",
+     lwd = 2,
+     pch = 19,
+     cex = 0.6,
+     xaxt = "n")
+axis.Date(1, at = seq(as.Date("1973-01-01"), as.Date("1979-01-01"), by = "6 months"),
+          format = "%b\n%Y", 
+          cex.axis = 0.7)
+abline(h = mean(muertes), col = "blue", lty = 2, lwd = 1.5)
+grid(nx = NA, ny = NULL, col = "gray", lty = "dotted")
+par(mfrow = c(1, 1))
+```
+
+```{r}
+# 2. Estimar la media poblacional λ usando los datos.
+
+lambda_estimado <- mean(muertes)
+cat("\n=== 2. Media Muestral ===\n")
+cat("Media muestral (estimador de λ):", round(lambda_estimado, 2), "\n")
+cat("Desviación estándar de los datos:", round(sd(muertes), 2), "\n")
+cat("Tamaño de la muestra original:", length(muertes), "\n")
+```
+
+```{r}
+set.seed(43)
+# 3. Generar 1000 medias muestrales de tamaño n=30 (muestreo con reemplazo)
+n <- 30         # tamaño
+B <- 1000       # medias muestrales
+
+medias_muestrales <- replicate(B, {
+  muestra <- sample(muertes, size = n, replace = TRUE)
+  mean(muestra)
+})
+
+cat("\n=== 3. DISTRIBUCIÓN MUESTRAL ===\n")
+cat("Media de las medias muestrales:", round(mean(medias_muestrales), 2), "\n")
+cat("Error estándar empírico (sd medias muestrales):", round(sd(medias_muestrales), 2), "\n")
+```
+
+```{r}
+# 4. Construir la distribución muestral de la media y compararla con la distribución normal teórica usando un histograma y una curva de densidad.
+media_teorica <- lambda_estimado         # Calculado en 2.
+ee_teorico <- sqrt(lambda_estimado / n)  # Error estándar teórico
+
+par(mfrow = c(1, 2), mar = c(4, 4, 3, 1))
+
+# Histograma de la distribución muestral
+hist(medias_muestrales,
+     breaks = 30,
+     freq = FALSE,
+     main = "Distribución Muestral Empírica",
+     xlab = "Media Muestral",
+     ylab = "Densidad",
+     col = "lightblue",
+     border = "white",
+     xlim = range(medias_muestrales))
+
+# Histograma teórico (simulando datos de la normal teórica)
+muestras_teoricas <- rnorm(B, mean = media_teorica, sd = ee_teorico)
+hist(muestras_teoricas,
+     breaks = 30,
+     freq = FALSE,
+     main = "Distribución Normal Teórica",
+     xlab = "Media Muestral",
+     ylab = "Densidad",
+     col = "lightcoral",
+     border = "white",
+     xlim = range(medias_muestrales))
+
+par(mfrow = c(1, 1))
+
+# Grafico de Curvas
+par(mar = c(4, 4, 3, 1))
+rango_x <- range(c(medias_muestrales, muestras_teoricas))
+x_vals <- seq(rango_x[1], rango_x[2], length.out = 500)
+
+# Densidades
+densidad_empirica <- density(medias_muestrales)
+densidad_teorica <- dnorm(x_vals, mean = media_teorica, sd = ee_teorico)
+
+# Curvas de densidad
+plot(densidad_empirica,
+     main = "Densidad Empírica vs. Teórica",
+     xlab = "Media Muestral",
+     ylab = "Densidad",
+     col = "blue",
+     lwd = 3,
+     xlim = rango_x,
+     ylim = c(0, max(densidad_empirica$y, densidad_teorica) * 1.1))
+
+# Curva normal teórica
+lines(x_vals, densidad_teorica,
+      col = "red",
+      lwd = 3,
+      lty = 2)
+
+# Leyendas
+legend("topright",
+       legend = c("Distribución Muestral de la Media", 
+                  "Distribución Normal Teórica"),
+       col = c("blue", "red"),
+       lwd = 3,
+       lty = c(1, 2),
+       bty = "n")
+
+abline(v = mean(medias_muestrales), col = "blue", lty = 3, lwd = 1.5)
+abline(v = media_teorica, col = "red", lty = 3, lwd = 1.5)
+```
+
+
+A partir del punto 2 se puede observar como la media muestral es de 8788, mientras que en el punto 3 al generar 1000 medias muestrales de tamaño 30, se obtuvo un promedio de media muestral de 8779, mostrando que estas son muy cercanas, y que el estimador de la media es insesgado, además de que un subconjunto de la muestra también podría llegar a ser representativo de esta.
+
+Del punto 4 podemos ver que en los histogramas se puede observar como la distribución de las medias abarca un mayor rango de valores para las medias muestrales, con presencia de valores entre 8.600 y 9.000 que va disminuyendo hacio los extremos de las colas, además esta se concentra en torno a 8.700 - 8.000.
+
+Por otra parte, para la Distribución Normal Teórica el rango de las medias es mucho más acotado, centrandose exclusivamente entre 8.700 y 8.800 (alrededor de la media verdadera del conjunto) y sin valores en los extremos (colas más pequeñas hacia 8.400 o 9.200). Esto también se puede apreciar en el gráfico de comparación de densidades, donde la curva teorica (roja) es más alta y estrecha en el centro, indicando mayor concentración de probabilidad cerca de la media, mientras que la curva muestral (azul) es más baja y ancha, reflejando mayor dispersión.
+
+Algo que destaca de estos resultados es que indican que los datos reales presentan mayor variabilidad de la esperada bajo el supuesto Poisson. 
+
+## Pregunta 3: Bootstrap en esperanza de vida
+
+El dataset `gapminder` registra indicadores de países a lo largo del tiempo. Para el año 2007, se dispone de la variable `lifeExp` (esperanza de vida al nacer).
+
+Se pide:\
+1. Estimar la media poblacional de `lifeExp` en 2007.\
+2. Calcular el error estándar de la media usando la fórmula teórica.\
+3. Aplicar bootstrap con 2000 réplicas para estimar nuevamente el error estándar.\
+4. Comparar ambos métodos.\
+5. Graficar la distribución de las medias obtenidas por bootstrap.
+
+```{r}
+set.seed(43)
+# Datos 2007
+data("gapminder")
+datos2007 <- filter(gapminder, year == 2007)
+
+lifexp2007 <- datos2007[[4]]
+
+# desv estandar / raiz del tamaño de la muestra
+err_estandar <- sd(lifexp2007) / sqrt(length(lifexp2007))
+
+# Bootstrap
+boot_mean <- function(data, indices){
+  mean(data[indices])
+}
+
+bootstrap2007 <- boot(lifexp2007, boot_mean, R=2000)
+
+# Comparar ambos métodos
+# Lo siguiente se podría hacer simplemente haciendo un print(bootstrap2007) pero queda un poco feo:
+resumen_boot <- data.frame(
+  media_m_data_original = bootstrap2007$t0,
+  sesgo = mean(bootstrap2007$t) - bootstrap2007$t0,
+  err_std_bootstrap = sd(bootstrap2007$t),
+  err_std_teorico = err_estandar
+)
+print(resumen_boot)
+
+hist(main = "Distrib. medias obtenidas por boot", bootstrap2007$t, breaks=60, col="skyblue")
+abline(v= bootstrap2007$t0, col = "red", lwd = 2)
+```
+
+
+
+P3.4 En la tabla se puede ver que el error estándar teórico y estimado con bootstrap son lo suficientemente parecidos.
+
+
+## Pregunta 4: Máxima verosimilitud en fenómenos naturales
+
+En Chile, se ha estimado que ocurren en promedio 12 terremotos significativos por año. Supondremos que el número de terremotos anuales sigue una distribución Poisson con parámetro $\lambda$.
+
+Se pide:\
+1. Simular 100 años de datos usando Poisson($\lambda=12$).\
+2. Estimar el valor de $\lambda$ mediante Máxima Verosimilitud (MLE).\
+3. Graficar la función de -logverosimilitud en función de $\lambda$ para valores entre 5 y 15 y señale su mínimo utilizando nlminb.\
+4. Comparar el estimador MLE con el promedio muestral de los datos y discutir los resultados.
+
+```{r}
+set.seed(43)
+
+# 1.  Simular 100 años de datos usando Poisson(lambda=12)
+lambda_real <- 12
+n_anios <- 100
+
+# Simular número de terremotos por año
+terremotos <- rpois(n_anios, lambda = lambda_real)
+
+cat("=== 1. Datos simulados ===\n")
+cat("Número de años:", n_anios, "\n")
+cat("lambda verdadero:", lambda_real, "\n")
+cat("Resumen de los datos:\n")
+print(summary(terremotos))
+
+# Visualización
+par(mfrow = c(1, 2), mar = c(4, 4, 3, 1))
+
+# Serie temporal
+plot(terremotos,
+     type = "o",
+     main = "Serie Temporal de Terremotos",
+     xlab = "Año",
+     ylab = "Número de Terremotos",
+     col = "darkblue",
+     pch = 19,
+     cex = 0.6)
+abline(h = lambda_real, col = "red", lwd = 2, lty = 2)
+par(mfrow = c(1, 1))
+```
+
+```{r}
+# 2. Estimar el valor de λ mediante Máxima Verosimilitud (MLE).
+
+# Función de -log-verosimilitud 
+negloglik <- function(lambda, datos) {
+  if (lambda <= 0) return(Inf)  # lambda debe ser positivo
+  # -log L(lambda) = -sumatoria[xi * log(lambda) - lambda - log(xi!)]
+  -sum(dpois(datos, lambda = lambda, log = TRUE))
+}
+
+# Estimación usando nlminb 
+lambda_inicial <- 10  # Valor inicial para la optimización
+# Lambda = 12 es el valor que queremos llegar a estimar
+
+resultado_nlminb <- nlminb(start = lambda_inicial,
+                           objective = negloglik,
+                           datos = terremotos,
+                           lower = 0.1,    # λ > 0
+                           upper = 50)
+
+lambda_mle <- resultado_nlminb$par
+
+cat("\n=== 2. Estimador MLE ===\n")
+cat("lambda MLE (usando nlminb):", round(lambda_mle, 4), "\n")
+cat("Valor de -log L en el mínimo:", round(resultado_nlminb$objective, 4), "\n")
+```
+
+
+
+```{r}
+# 3. Graficar la función de -logverosimilitud en función de λ para valores entre 5 y 15 y señale su mínimo utilizando nlminb.
+
+# Evaluar -log L para lambda entre 5 y 15
+lambda_valores <- seq(5, 15, length.out = 200)
+negloglik_valores <- sapply(lambda_valores, negloglik, datos = terremotos)
+
+par(mar = c(4, 4, 3, 1))
+
+plot(lambda_valores, negloglik_valores,
+     type = "l",
+     lwd = 2,
+     col = "darkblue",
+     main = "Función de -Log Verosimilitud",
+     xlab = expression(lambda),
+     ylab = "-log L(λ)",
+     ylim = range(negloglik_valores[is.finite(negloglik_valores)]))
+
+# Marcar el mínimo encontrado
+points(lambda_mle, resultado_nlminb$objective,
+       pch = 19,
+       col = "red",
+       cex = 1.5)
+
+# Línea vertical en el mínimo
+abline(v = lambda_mle, col = "red", lty = 2, lwd = 1.5)
+
+# Línea vertical en lambda verdadero
+abline(v = lambda_real, col = "darkgreen", lty = 2, lwd = 1.5)
+
+legend("topright",
+       legend = c(paste0("MLE: λ = ", round(lambda_mle, 3)),
+                  paste0("λ verdadero = ", lambda_real),
+                  "Mínimo (nlminb)"),
+       col = c("red", "darkgreen", "red"),
+       lty = c(2, 2, NA),
+       pch = c(NA, NA, 19),
+       lwd = c(1.5, 1.5, NA),
+       bty = "n")
+```
+
+```{r}
+# 4. Comparar el estimador MLE con el promedio muestral de los datos y discutir los resultados.
+promedio_muestral <- mean(terremotos)
+
+cat("\n=== 4. COMPARACIÓN DE ESTIMADORES ===\n")
+cat("lambda verdadero:", lambda_real, "\n")
+cat("lambda MLE (nlminb):", round(lambda_mle, 4), "\n")
+cat("Promedio muestral:", round(promedio_muestral, 4), "\n")
+cat("Diferencia (MLE - Promedio):", round(lambda_mle - promedio_muestral, 6), "\n")
+cat("\n")
+
+# Error de estimación
+error_mle <- abs(lambda_mle - lambda_real)
+error_promedio <- abs(promedio_muestral - lambda_real)
+
+cat("Error absoluto MLE:", round(error_mle, 4), "\n")
+cat("Error absoluto Promedio:", round(error_promedio, 4), "\n")
+cat("\n")
+```
+De los resultados se puede apreciar el lmabda verdadero corresponde a 12, y que aunque el $\lambda$ inicial usado en el punto 2 fue de 10, al realizar MLE se logro llegar a $\lambda=12.08$, un valor cercano y que ratifica que para una distribución de Poisson, el MLE es consistente en acercase al valor verdadero, y que además (viendo los resultados del punto 4) se cumple que $MLE=Media Muestral=12.08$, siendo un estimador eficiente.
+
+Por otra parte, del gráfico del punto 3 podemos ver como el mínimo de la función -Log Verosimilitud se encuentra en $\lambda=12.08$. Este mínimo se garantiza por la curva convexa que se observa, resultante de la optimización realizada con nlminb.
+
+
+
+
+
+
+
+## Pregunta 5: Tiempos de espera en urgencias
+
+En un hospital se registra el tiempo de espera de los pacientes en urgencias, el cual sigue aproximadamente una distribución Exponencial con media de 20 minutos.
+
+Se pide:
+
+1.  Simular 1000 tiempos de espera.
+2.  Calcular la varianza teórica y la varianza muestral.
+3.  Determinar el sesgo del estimador de la varianza.
+4.  Construir un intervalo de confianza del 95% para la media usando la t-distribution.
+5.  Graficar un histograma de los tiempos simulados y marcar la media muestral.
+6.  Comente sus resultados
+
+```{r}
+# Enunciado
+set.seed(43)
+media_verdadera <- 20  # minutos
+lambda_verdadero <- 1 / media_verdadera
+
+# 1. Simular 1000 tiempos de espera.
+n <- 1000
+tiempos <- rexp(n, rate = lambda_verdadero)
+
+cat("=== 1. DATOS SIMULADOS ===\n")
+cat("Número de observaciones:", n, "\n")
+cat("Primeros 10 tiempos:", round(head(tiempos, 10), 2), "\n")
+cat("Resumen estadístico:\n")
+print(summary(tiempos))
+cat("\n")
+```
+
+
+```{r}
+# 2. Calcular la varianza teórica y la varianza muestral.
+
+# Para Exponencial(λ):
+# 2.0 Varianza teórica = 1/λ² (1/(1/20)^2) = media² = (20)^2 (independiente de los datos simulados)
+varianza_teorica <- media_verdadera^2
+
+# Varianza muestral
+# 2.1 s² con denominador (n-1) - estimador insesgado
+varianza_muestral_insesgada <- var(tiempos)
+
+# 2.2 s² con denominador n - estimador sesgado (MLE)
+varianza_muestral_sesgada <- sum((tiempos - mean(tiempos))^2) / n
+
+cat("=== 2. VARIANZAS ===\n")
+cat("Varianza teórica (σ²):", varianza_teorica, "min²\n")
+cat("Varianza muestral insesgada s² (n-1):", round(varianza_muestral_insesgada, 2), "min²\n")
+cat("Varianza muestral sesgada (n) (MLE):", round(varianza_muestral_sesgada, 2), "min²\n")
+cat("\n")
+```
+
+```{r}
+# 3. Determinar el sesgo del estimador de la varianza (teorica y muestral).
+
+# Sesgo = E[estimador] - valor verdadero
+# Para el estimador insesgado s²: E[s²] = σ², entonces Sesgo = 0 (teóricamente)
+# Para el estimador sesgado: E[s²_sesgado] = ((n-1)/n)σ²
+
+# Sesgos teoricos
+sesgo_teorico_insesgado <- 0
+sesgo_teorico_sesgado <- -varianza_teorica / n
+
+# Sesgo muestrales
+sesgo_empirico_insesgado <- varianza_muestral_insesgada - varianza_teorica
+sesgo_empirico_sesgado <- varianza_muestral_sesgada - varianza_teorica
+
+cat("=== 3. SESGO DEL ESTIMADOR DE VARIANZA ===\n")
+cat("\nEstimador INSESGADO s² (denominador n-1):\n")
+cat("  Sesgo teórico:", sesgo_teorico_insesgado, "\n")
+cat("  Sesgo muestral:", round(sesgo_empirico_insesgado, 2), "min²\n")
+
+cat("\nEstimador SESGADO (denominador n):\n")
+cat("  Sesgo teórico:", round(sesgo_teorico_sesgado, 2), "min²\n")
+cat("  Sesgo muestral:", round(sesgo_empirico_sesgado, 2), "min²\n")
+cat("\n")
+```
+
+```{r}
+# 4. Construir un intervalo de confianza del 95% para la media usando la t-distribution.
+media_muestral <- mean(tiempos)
+ee <- sd(tiempos) / sqrt(n)      # error estandar
+
+# Intervalo de confianza usando t-distribution
+t_critico <- qt(0.975, df = n - 1)
+ic_95_t <- media_muestral + c(-1, 1) * t_critico * ee
+
+cat("=== 4. INTERVALOS DE CONFIANZA 95% PARA LA MEDIA ===\n")
+cat("Media muestral (X̄):", round(media_muestral, 2), "minutos\n")
+cat("Error estándar (EE):", round(ee, 2), "minutos\n")
+cat("Valor crítico t:", round(t_critico, 4), "\n")
+cat("Intervalo de confianza 95%:", 
+    sprintf("[%.2f, %.2f]", ic_95_t[1], ic_95_t[2]), "minutos\n")
+cat("Amplitud del intervalo de confianza:", round(diff(ic_95_t), 2), "minutos\n")
+```
+
+```{r}
+# 5. Graficar un histograma de los tiempos simulados y marcar la media muestral.
+par(mfrow = c(2, 2), mar = c(4, 4, 3, 1))
+
+# Histograma con CONTEO (frecuencias)
+hist(tiempos,
+     breaks = 50,
+     freq = TRUE,
+     main = "Distribución de Tiempos de Espera",
+     xlab = "Tiempo de espera (minutos)",
+     ylab = "Frecuencia",
+     col = "lightblue",
+     border = "white",
+     xlim = c(0, max(tiempos)))
+
+# Líneas verticales para las medias
+abline(v = media_muestral, col = "red", lwd = 3, lty = 1)
+abline(v = media_verdadera, col = "darkgreen", lwd = 3, lty = 2)
+
+# Leyenda (sin la densidad teórica)
+legend("topright",
+       legend = c(paste0("Media muestral = ", round(media_muestral, 2)),
+                  paste0("Media verdadera = ", media_verdadera)),
+       col = c("red", "darkgreen"),
+       lwd = 3,
+       lty = c(1, 2),
+       bty = "n",
+       cex = 0.8)
+```
+
+
+A partir del gráfico del punto 5 se puede observar que la media muestral (20.2 minutos) es muy cercana a la media verdadera (20 minutos), lo que nos indica que la simulación reproduce adecuadamente el comportamiento esperado de una distribución Exponencial con media 20.
+
+Por otra parte, aunque las medias son similares, la distribución no es simétrica, sino que la mayoría de los tiempos se concentran en valores pequeños, mientras que existen algunos casos con esperas mucho mayores, lo que refleja correctamente la cola derecha de una distribución Exponencial.
+
+
+Por otra parte, se tiene que la varianza teorica corresponde a $\sigma=400 min^2$, mientras que la varianza muestral insesgada fue de $s^2=415.57min^2$. Esto indica que el estimador insesgado de la varianza es una aproximación aceptable a los valores con los que se trabaja.
+
+Por otra parte, (del punto 3), se tiene que el sesgo del estimador de la varianza teorica es de $-0.4min^2$, lo que es muy pequeño y que por tanto indica que para un $n$ muy grande este sería despreciable. Por tanto, si realizaramos múltiples simulaciones más, entonces el sesgo promedio debería de tender al teorico.
+
+Del punto 4 podemos observar que el intervalo de confianza del 95% para la media, mediante t-distribution fue [18.94, 21.47], y como la media verdadera (20) se encuentra en el rango, se cumple lo esperado de un IC. (95% de los intervalos construidos de esta forma contendrán el valor real de la media)
+
+A partir de todos los resultados se puede concluir que los estimadores de la media y la varianza fueron correctos para una muestra grande y que los sesgos teóricos se confirmaron con distribuciones muestrales. Asimismo, el comportamiento de las muestrales fue coherente con uno de distribución exponencial.
+
+
+<hr />
+
+<p style="text-align: center;">
+
+A work by <a href="https://github.com/dccuchile/CC6104">CC6104</a>
+
+</p>
+
+<!-- Add icon library -->
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.1/css/all.css">
+
+<!-- Add font awesome icons -->
+
+<p style="text-align: center;">
+
+<a href="https://github.com/dccuchile/CC6104"><i class="fab fa-github" style='font-size:30px'></i></a> <a href="https://discord.gg/XCbQvGs3Uf"><i class="fab fa-discord" style='font-size:30px'></i></a>
+
+</p>
+
+ 
